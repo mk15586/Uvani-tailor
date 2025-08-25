@@ -64,19 +64,20 @@ export function AppSidebar() {
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} legacyBehavior passHref>
-                <SidebarMenuButton
-                  isActive={pathname.startsWith(item.href)}
-                  tooltip={{
-                    children: item.label,
-                    className: "font-body",
-                  }}
-                  className="justify-start gap-4 font-body"
-                >
+              <SidebarMenuButton
+                asChild
+                isActive={pathname.startsWith(item.href)}
+                tooltip={{
+                  children: item.label,
+                  className: "font-body",
+                }}
+                className="justify-start gap-4 font-body"
+              >
+                <Link href={item.href}>
                   <item.icon className="h-5 w-5" />
                   <span>{item.label}</span>
-                </SidebarMenuButton>
-              </Link>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
@@ -104,17 +105,18 @@ export function AppSidebar() {
               Pro Tailor
             </p>
           </div>
-          <Link href="/signin" legacyBehavior passHref>
-             <Button
-              variant="ghost"
-              size="icon"
-              className={`text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-                state === "collapsed" ? "hidden" : ""
-              }`}
-            >
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className={`text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+              state === "collapsed" ? "hidden" : ""
+            }`}
+          >
+            <Link href="/signin">
               <LogOut className="h-5 w-5" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </SidebarFooter>
     </Sidebar>
