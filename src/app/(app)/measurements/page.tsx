@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -32,15 +33,6 @@ import { Ruler, Edit } from "lucide-react";
 export default function MeasurementsPage() {
   return (
     <div className="flex flex-col gap-8">
-      <header className="animate-fade-in-up">
-        <h1 className="font-headline text-4xl font-bold tracking-tight text-primary">
-          Measurements & Deliveries
-        </h1>
-        <p className="text-muted-foreground">
-          Manage client measurements and track delivery schedules.
-        </p>
-      </header>
-
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Card className="animate-fade-in-up shadow-lg" style={{ animationDelay: '200ms' }}>

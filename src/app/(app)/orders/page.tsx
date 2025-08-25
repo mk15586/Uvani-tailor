@@ -1,3 +1,4 @@
+
 import {
   Table,
   TableBody,
@@ -39,15 +40,6 @@ export default function OrdersPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="animate-fade-in-up">
-        <h1 className="font-headline text-4xl font-bold tracking-tight text-primary">
-          Order Management
-        </h1>
-        <p className="text-muted-foreground">
-          View, track, and manage all your customer orders.
-        </p>
-      </header>
-
       <Card className="animate-fade-in-up shadow-lg" style={{ animationDelay: "200ms" }}>
         <CardHeader>
           <div className="flex items-center justify-between gap-4">

@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -50,15 +51,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="animate-fade-in-up">
-        <h1 className="font-headline text-4xl font-bold tracking-tight text-primary">
-          Dashboard
-        </h1>
-        <p className="text-muted-foreground">
-          A quick overview of your tailoring business.
-        </p>
-      </header>
-
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[
           { title: "Total Revenue", value: "$45,231.89", change: "+20.1%", icon: DollarSign },

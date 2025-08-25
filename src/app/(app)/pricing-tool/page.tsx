@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -24,7 +25,7 @@ import { Wand2, Loader2, Sparkles } from "lucide-react";
 
 export default function PricingToolPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<null | object>(null);
+  const [result, setResult] = useState<{ price: string; reasoning: string } | null>(null);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -41,15 +42,6 @@ export default function PricingToolPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="animate-fade-in-up">
-        <h1 className="font-headline text-4xl font-bold tracking-tight text-primary flex items-center gap-3">
-          <Wand2 /> AI Pricing Assistant
-        </h1>
-        <p className="text-muted-foreground">
-          Generate ideal price suggestions for your bespoke creations.
-        </p>
-      </header>
-      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <Card className="animate-fade-in-up shadow-lg" style={{ animationDelay: '200ms' }}>
             <form onSubmit={handleSubmit}>

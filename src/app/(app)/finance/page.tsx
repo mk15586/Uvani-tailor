@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -22,15 +23,6 @@ import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
 export default function FinancePage() {
   return (
     <div className="flex flex-col gap-8">
-      <header className="animate-fade-in-up">
-        <h1 className="font-headline text-4xl font-bold tracking-tight text-primary">
-          Financials
-        </h1>
-        <p className="text-muted-foreground">
-          Track your income, expenses, and profitability.
-        </p>
-      </header>
-      
       <Tabs defaultValue="overview" className="space-y-4 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
