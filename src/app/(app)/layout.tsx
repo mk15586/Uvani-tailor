@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/shared/sidebar";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppHeader } from "@/components/shared/header";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
