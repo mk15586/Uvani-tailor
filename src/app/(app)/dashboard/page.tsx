@@ -6,6 +6,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription
 } from "@/components/ui/card";
 import {
   Table,
@@ -24,13 +25,13 @@ import {
   ChartLegend,
   ChartLegendContent
 } from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Legend, ResponsiveContainer } from "recharts";
-import { DollarSign, ShoppingBag, Users, ArrowUpRight } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { DollarSign, ShoppingBag, Users, Activity } from "lucide-react";
 import { MOCK_FINANCIAL_DATA, MOCK_ORDERS } from "@/lib/mock-data";
 
 const chartConfig = {
-  income: { label: "Income", color: "hsl(var(--primary))" },
-  expenses: { label: "Expenses", color: "hsl(var(--accent))" },
+  income: { label: "Income", color: "hsl(var(--chart-1))" },
+  expenses: { label: "Expenses", color: "hsl(var(--chart-2))" },
 } satisfies ChartConfig;
 
 export default function DashboardPage() {
@@ -50,17 +51,17 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         {[
-          { title: "Total Revenue", value: "$45,231.89", change: "+20.1%", icon: DollarSign },
-          { title: "Active Orders", value: "+23", change: "+180.1%", icon: ShoppingBag },
-          { title: "New Clients", value: "+12", change: "+19%", icon: Users },
-          { title: "Growth", value: "+5.2%", change: "+2.1%", icon: ArrowUpRight },
+          { title: "Total Revenue", value: "$45,231.89", change: "+20.1% from last month", icon: DollarSign },
+          { title: "Active Orders", value: "+23", change: "+180.1% from last month", icon: ShoppingBag },
+          { title: "New Clients", value: "+12", change: "+19% from last month", icon: Users },
+          { title: "Growth", value: "+5.2%", change: "+2.1% from last month", icon: Activity },
         ].map((item, index) => (
           <Card
             key={item.title}
-            className="animate-fade-in-up shadow-lg transition-transform duration-300 hover:-translate-y-1"
+            className="animate-fade-in-up"
             style={{ animationDelay: `${100 + index * 100}ms` }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -69,16 +70,17 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{item.value}</div>
-              <p className="text-xs text-muted-foreground">{item.change} from last month</p>
+              <p className="text-xs text-muted-foreground">{item.change}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        <Card className="lg:col-span-3 animate-fade-in-up shadow-lg" style={{ animationDelay: '600ms' }}>
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+        <Card className="xl:col-span-2 animate-fade-in-up" style={{ animationDelay: '600ms' }}>
           <CardHeader>
             <CardTitle>Financial Overview</CardTitle>
+            <CardDescription>An overview of your income and expenses.</CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
              <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -88,17 +90,18 @@ export default function DashboardPage() {
                   <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} />
                   <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Legend content={<ChartLegendContent />} />
-                  <Bar dataKey="income" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="expenses" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Bar dataKey="income" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="expenses" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
-        <Card className="lg:col-span-2 animate-fade-in-up shadow-lg" style={{ animationDelay: '700ms' }}>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '700ms' }}>
           <CardHeader>
             <CardTitle>Recent Orders</CardTitle>
+            <CardDescription>A list of your most recent orders.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -117,7 +120,7 @@ export default function DashboardPage() {
                       <div className="text-sm text-muted-foreground">{order.type}</div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={statusVariant(order.status) as any}>{order.status}</Badge>
+                      <Badge variant={statusVariant(order.status) as any} className="capitalize">{order.status}</Badge>
                     </TableCell>
                     <TableCell className="text-right">${order.amount.toFixed(2)}</TableCell>
                   </TableRow>
@@ -127,6 +130,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   );
 }

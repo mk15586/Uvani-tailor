@@ -41,9 +41,12 @@ export default function PricingToolPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <Card className="animate-fade-in-up shadow-lg" style={{ animationDelay: '200ms' }}>
+    <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+       <div className="flex items-center">
+        <h1 className="font-semibold text-lg md:text-2xl">AI Pricing Tool</h1>
+       </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <Card className="lg:col-span-2 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
             <form onSubmit={handleSubmit}>
                 <CardHeader>
                     <CardTitle>Describe the Garment</CardTitle>
@@ -102,31 +105,30 @@ export default function PricingToolPage() {
             </form>
         </Card>
 
-        <Card className="animate-fade-in-up shadow-lg sticky top-6" style={{ animationDelay: '300ms' }}>
-            <CardHeader className="flex-row gap-3 items-center">
-                <Sparkles className="w-8 h-8 text-accent" />
-                <div>
+        <div className="sticky top-20">
+            <Card className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+                <CardHeader className="flex-row gap-3 items-center space-y-0">
+                    <Sparkles className="w-6 h-6 text-primary" />
                     <CardTitle>Suggested Pricing</CardTitle>
-                    <CardDescription>Our AI's recommendation will appear here.</CardDescription>
-                </div>
-            </CardHeader>
-            <CardContent className="min-h-[200px] flex items-center justify-center">
-                {isLoading && <Loader2 className="w-10 h-10 text-primary animate-spin" />}
-                {!isLoading && !result && (
-                    <div className="text-center text-muted-foreground p-8">
-                        <p>Your price suggestion is waiting...</p>
-                    </div>
-                )}
-                {result && (
-                    <div className="space-y-4 text-center animate-fade-in-up">
-                        <p className="text-sm text-primary font-semibold">Suggested Price Range</p>
-                        <h2 className="font-headline text-5xl text-primary">{result.price}</h2>
-                        <p className="text-sm text-muted-foreground pt-4 border-t">{result.reasoning}</p>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+                </CardHeader>
+                <CardContent className="min-h-[200px] flex items-center justify-center">
+                    {isLoading && <Loader2 className="w-10 h-10 text-primary animate-spin" />}
+                    {!isLoading && !result && (
+                        <div className="text-center text-muted-foreground p-8">
+                            <p>Your price suggestion is waiting...</p>
+                        </div>
+                    )}
+                    {result && (
+                        <div className="space-y-4 text-center animate-fade-in-up">
+                            <p className="text-sm text-primary font-semibold uppercase tracking-wider">Suggested Price Range</p>
+                            <h2 className="font-bold text-5xl text-primary">${result.price}</h2>
+                            <p className="text-sm text-muted-foreground pt-4 border-t">{result.reasoning}</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,4 +1,6 @@
 
+"use client";
+
 import {
   Table,
   TableBody,
@@ -18,9 +20,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { MOCK_ORDERS } from "@/lib/mock-data";
-import { Search, ListFilter } from "lucide-react";
+import { Search, ListFilter, File, PlusCircle } from "lucide-react";
+import { useState } from "react";
 
 export default function OrdersPage() {
     const statusVariant = (status: string) => {
@@ -37,36 +40,69 @@ export default function OrdersPage() {
         return "outline";
     }
   };
+  
+  const [filters, setFilters] = useState<Record<string, boolean>>({
+    completed: true,
+    "in progress": true,
+    pending: true,
+    shipped: true,
+  });
+
+  const handleFilterChange = (status: string, checked: boolean) => {
+    setFilters(prev => ({...prev, [status.toLowerCase()]: checked }));
+  };
+
+  const filteredOrders = MOCK_ORDERS.filter(order => filters[order.status.toLowerCase()]);
+
 
   return (
-    <div className="flex flex-col gap-8">
-      <Card className="animate-fade-in-up shadow-lg" style={{ animationDelay: "200ms" }}>
+    <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+      <div className="flex items-center">
+        <h1 className="font-semibold text-lg md:text-2xl">Orders</h1>
+        <div className="ml-auto flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 gap-1">
+                  <ListFilter className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    Filter
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {["Completed", "In Progress", "Pending", "Shipped"].map(status => (
+                   <DropdownMenuCheckboxItem 
+                      key={status}
+                      checked={filters[status.toLowerCase()]}
+                      onCheckedChange={(checked) => handleFilterChange(status, !!checked)}
+                   >
+                    {status}
+                   </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button size="sm" variant="outline" className="h-8 gap-1">
+              <File className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Export
+              </span>
+            </Button>
+            <Button size="sm" className="h-8 gap-1">
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Add Order
+              </span>
+            </Button>
+        </div>
+      </div>
+      <Card className="animate-fade-in-up" style={{ animationDelay: "200ms" }}>
         <CardHeader>
-          <div className="flex items-center justify-between gap-4">
-            <CardTitle>All Orders</CardTitle>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search orders..." className="pl-10" />
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <ListFilter className="h-4 w-4" />
-                    <span>Filter</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem checked>Completed</DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem>In Progress</DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem>Pending</DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem>Shipped</DropdownMenuCheckboxItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search by order ID, customer, or garment type..." className="pl-10 w-full" />
             </div>
-          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -81,7 +117,7 @@ export default function OrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {MOCK_ORDERS.map((order, index) => (
+              {filteredOrders.map((order, index) => (
                 <TableRow
                   key={order.id}
                   className="animate-fade-in-up"
@@ -92,7 +128,7 @@ export default function OrdersPage() {
                   <TableCell>{order.type}</TableCell>
                   <TableCell>{order.date}</TableCell>
                   <TableCell>
-                    <Badge variant={statusVariant(order.status) as any}>{order.status}</Badge>
+                    <Badge variant={statusVariant(order.status) as any} className="capitalize">{order.status}</Badge>
                   </TableCell>
                   <TableCell className="text-right">${order.amount.toFixed(2)}</TableCell>
                 </TableRow>
@@ -101,6 +137,6 @@ export default function OrdersPage() {
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

@@ -16,13 +16,16 @@ import {
   ChartLegend,
   ChartLegendContent
 } from "@/components/ui/chart";
-import { Area, AreaChart, CartesianGrid, Legend, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { MOCK_FINANCIAL_DATA, MOCK_FINANCIAL_CHART_CONFIG } from "@/lib/mock-data";
 import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
 
 export default function FinancePage() {
   return (
-    <div className="flex flex-col gap-8">
+    <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+       <div className="flex items-center">
+        <h1 className="font-semibold text-lg md:text-2xl">Finance</h1>
+       </div>
       <Tabs defaultValue="overview" className="space-y-4 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -30,7 +33,7 @@ export default function FinancePage() {
           <TabsTrigger value="expenses">Expense Report</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[
               { title: "Total Profit", value: "$32,121.89", icon: DollarSign, description: "+22% from last month" },
               { title: "Total Income", value: "$45,231.89", icon: TrendingUp, description: "+25% from last month" },
@@ -38,7 +41,7 @@ export default function FinancePage() {
             ].map((item, index) => (
               <Card 
                 key={item.title} 
-                className="shadow-lg transition-transform duration-300 hover:-translate-y-1 animate-fade-in-up"
+                className="animate-fade-in-up"
                 style={{ animationDelay: `${300 + index * 100}ms` }}
                 >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -53,7 +56,7 @@ export default function FinancePage() {
             ))}
           </div>
 
-          <Card className="shadow-lg animate-fade-in-up" style={{ animationDelay: '600ms' }}>
+          <Card className="animate-fade-in-up" style={{ animationDelay: '600ms' }}>
             <CardHeader>
               <CardTitle>Annual Performance</CardTitle>
               <CardDescription>Income vs. Expenses over the year</CardDescription>
@@ -72,21 +75,21 @@ export default function FinancePage() {
                     >
                     <defs>
                         <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/>
                         </linearGradient>
                         <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/>
                         </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
                     <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => `$${value/1000}k`} />
                     <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
-                    <Legend content={<ChartLegendContent />} />
-                    <Area type="monotone" dataKey="income" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorIncome)" />
-                    <Area type="monotone" dataKey="expenses" stroke="hsl(var(--accent))" fillOpacity={1} fill="url(#colorExpenses)" />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    <Area type="monotone" dataKey="income" stroke="hsl(var(--chart-1))" fillOpacity={1} fill="url(#colorIncome)" />
+                    <Area type="monotone" dataKey="expenses" stroke="hsl(var(--chart-2))" fillOpacity={1} fill="url(#colorExpenses)" />
                     </AreaChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -94,6 +97,6 @@ export default function FinancePage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </main>
   );
 }
