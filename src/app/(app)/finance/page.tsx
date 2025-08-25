@@ -12,11 +12,10 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  ChartConfig,
   ChartLegend,
   ChartLegendContent
 } from "@/components/ui/chart";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { Area, AreaChart, CartesianGrid, Legend, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { MOCK_FINANCIAL_DATA, MOCK_FINANCIAL_CHART_CONFIG } from "@/lib/mock-data";
 import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
 
