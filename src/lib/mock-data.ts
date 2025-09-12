@@ -1,13 +1,14 @@
 import type { ChartConfig } from "@/components/ui/chart";
 
 export const MOCK_ORDERS = [
-  { id: "ORD001", customer: "Eleonora Vance", type: "Silk Gown", status: "Completed", amount: 450.0, date: "2023-10-26" },
-  { id: "ORD002", customer: "Julian Croft", type: "Bespoke Suit", status: "In Progress", amount: 1250.0, date: "2023-10-28" },
-  { id: "ORD003", customer: "Penelope Hayes", type: "Tweed Blazer", status: "Pending", amount: 320.0, date: "2023-11-01" },
-  { id: "ORD004", customer: "Arthur Finch", type: "Linen Trousers", status: "Completed", amount: 180.0, date: "2023-10-22" },
-  { id: "ORD005", customer: "Seraphina Monroe", type: "Evening Dress", status: "Shipped", amount: 780.0, date: "2023-10-20" },
-  { id: "ORD006", customer: "Maximilian Sterling", type: "Tuxedo", status: "In Progress", amount: 1500.0, date: "2023-11-05" },
-  { id: "ORD007", customer: "Isabella Dubois", type: "Cocktail Dress", status: "Completed", amount: 550.0, date: "2023-10-15" },
+  { id: "ORD001", customer: "Eleonora Vance", type: "Silk Gown", fabric: "Charmeuse Silk", design: "A-Line, floor length", location: "New York, NY", lat: 40.7128, lng: -74.0060, status: "Completed", amount: 450.0, date: "2023-10-26" },
+  { id: "ORD002", customer: "Julian Croft", type: "Bespoke Suit", fabric: "Merino Wool", design: "Two-piece, single-breasted", location: "London, UK", lat: 51.5072, lng: -0.1276, status: "In Progress", amount: 1250.0, date: "2023-10-28" },
+  { id: "ORD003", customer: "Penelope Hayes", type: "Tweed Blazer", fabric: "Harris Tweed", design: "Classic fit, patch pockets", location: "Edinburgh, SCT", lat: 55.9533, lng: -3.1883, status: "New", amount: 320.0, date: "2023-11-01" },
+  { id: "ORD004", customer: "Arthur Finch", type: "Linen Trousers", fabric: "Irish Linen", design: "Pleated front, relaxed fit", location: "Dublin, IRE", lat: 53.3498, lng: -6.2603, status: "Completed", amount: 180.0, date: "2023-10-22" },
+  { id: "ORD005", customer: "Seraphina Monroe", type: "Evening Dress", fabric: "Velvet", design: "Mermaid silhouette", location: "Los Angeles, CA", lat: 34.0522, lng: -118.2437, status: "Shipped", amount: 780.0, date: "2023-10-20" },
+  { id: "ORD006", customer: "Maximilian Sterling", type: "Tuxedo", fabric: "Satin Lapel Wool", design: "Shawl collar, slim fit", location: "Paris, FR", lat: 48.8566, lng: 2.3522, status: "In Progress", amount: 1500.0, date: "2023-11-05" },
+  { id: "ORD007", customer: "Isabella Dubois", type: "Cocktail Dress", fabric: "Lace", design: "Sheath, knee-length", location: "Miami, FL", lat: 25.7617, lng: -80.1918, status: "Completed", amount: 550.0, date: "2023-10-15" },
+  { id: "ORD008", customer: "Aarav Sharma", type: "Kurta Pajama", fabric: "Cotton Silk", design: "Embroidered neckline", location: "Mumbai, IND", lat: 19.0760, lng: 72.8777, status: "New", amount: 250.0, date: "2023-11-02" },
 ];
 
 export const MOCK_FINANCIAL_DATA = {

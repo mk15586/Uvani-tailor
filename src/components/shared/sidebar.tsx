@@ -51,7 +51,7 @@ export function AppSidebar() {
     <Sidebar
       variant="sidebar"
       collapsible="icon"
-      className="fixed h-full z-50 border-r border-sidebar-border/50 bg-[#1A1126] transition-all duration-500 ease-in-out hidden md:block shadow-xl"
+      className="fixed h-full z-50 border-r border-sidebar-border/50 bg-[#1A1126] transition-all duration-500 ease-in-out shadow-xl"
     >
       <div className="flex flex-col justify-between h-full">
         <div>
@@ -165,7 +165,7 @@ export function AppSidebar() {
                 }}
                 className="justify-start gap-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all duration-300 group"
               >
-                <Link href="#">
+                <Link href="/settings">
                   <Settings className="h-5 w-5 transition-transform duration-300 group-hover:rotate-45" />
                   <span>Settings</span>
                 </Link>

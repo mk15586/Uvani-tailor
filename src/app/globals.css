@@ -20,6 +20,8 @@
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 20% 98%;
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 210 20% 98%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 339 58% 27%;
@@ -82,4 +84,27 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Prevent horizontal scroll on mobile/tablet by default */
+html, body, #__next {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Ensure images and media don't cause overflow */
+img, picture, video, iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Constrain large containers on small screens */
+.container, .card, main {
+  max-width: 100%;
+}
+
+/* Fix for absolute positioned elements that may overflow */
+* > img, * > video {
+  display: block;
+  max-width: 100%;
 }

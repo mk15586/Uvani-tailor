@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { useSidebar } from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
   Box,
@@ -46,6 +47,8 @@ export function AppHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const [isSmall, setIsSmall] = useState<boolean>(false);
+  const { setOpenMobile } = useSidebar();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,6 +56,13 @@ export function AppHeader() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const checkSize = () => setIsSmall(window.innerWidth < 640);
+    checkSize();
+    window.addEventListener('resize', checkSize);
+    return () => window.removeEventListener('resize', checkSize);
   }, []);
 
   const getCurrentPage = () => {
@@ -64,10 +74,16 @@ export function AppHeader() {
 
   return (
     <header className={cn(
-      "sticky top-0 z-50 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300 px-4 lg:px-6 flex items-center",
+      "sticky top-0 z-50 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300 px-3 sm:px-4 lg:px-6 flex items-center",
       isScrolled && "shadow-md h-14"
     )}>
-      <div className="flex w-full items-center justify-between gap-4">
+  <div className="flex w-full items-center justify-between gap-4">
+        {/* Mobile: sidebar toggle */}
+        <div className="md:hidden">
+          <Button variant="ghost" size="icon" onClick={() => setOpenMobile(true)} aria-label="Open navigation">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </div>
         {/* Left: Current Page Name and Icon */}
         <div className="flex items-center gap-3 min-w-0">
           {(() => {
@@ -75,7 +91,7 @@ export function AppHeader() {
             return (
               <>
                 <Icon className="h-7 w-7 text-primary shrink-0" />
-                <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight whitespace-nowrap">{label}</span>
+                <span className="hidden sm:inline-block text-xl font-bold text-gray-900 dark:text-white tracking-tight whitespace-nowrap max-w-[20ch] overflow-hidden text-ellipsis">{label}</span>
               </>
             );
           })()}
@@ -83,15 +99,17 @@ export function AppHeader() {
 
         {/* Center: Search Bar */}
         <div className={cn(
-          "flex-1 flex justify-center",
-          searchOpen ? "max-w-xl" : "max-w-md"
+          "flex-1 flex justify-center min-w-0",
+          searchOpen
+            ? "max-w-[calc(100%-6rem)] sm:max-w-xl"
+            : "max-w-[calc(100%-8rem)] sm:max-w-md"
         )}>
           <div className="relative w-full max-w-lg">
             <div className="relative flex items-center">
               <Search className="absolute left-3 h-4 w-4 text-muted-foreground transition-opacity" />
               <Input
-                type="search"
-                placeholder="Search orders, customers, products..."
+                type="text"
+                placeholder={isSmall ? "Search" : "Search orders, customers, products..."}
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 onFocus={() => setSearchOpen(true)}
@@ -117,16 +135,16 @@ export function AppHeader() {
         </div>
 
         {/* Right: Notification and Profile */}
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="rounded-full relative">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button variant="ghost" size="icon" className="rounded-full relative overflow-visible">
             <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
+            <span className="absolute top-0 right-0 translate-x-1/4 -translate-y-1/4 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
               3
             </span>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 overflow-visible">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-primary to-purple-600 text-white text-sm font-semibold">
                   JD
                 </div>
