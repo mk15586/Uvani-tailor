@@ -75,7 +75,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
-import Map from "@/components/shared/Map";
+import dynamic from "next/dynamic";
+const Map = dynamic(() => import("@/components/shared/Map"), { ssr: false });
 import { cn } from "@/lib/utils";
 
 type Order = (typeof MOCK_ORDERS)[0];

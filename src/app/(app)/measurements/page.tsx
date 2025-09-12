@@ -61,7 +61,8 @@ import {
   Bell
 } from "lucide-react";
 import { MOCK_CLIENTS, MOCK_MEASUREMENTS, MOCK_ORDERS } from "@/lib/mock-data";
-import Map from "@/components/shared/Map";
+import dynamic from "next/dynamic";
+const Map = dynamic(() => import("@/components/shared/Map"), { ssr: false });
 import { useState } from "react";
 import { format } from "date-fns";
 

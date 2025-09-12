@@ -49,7 +49,8 @@ import {
   AlertCircle,
   Info
 } from "lucide-react";
-import Map from "@/components/shared/Map";
+import dynamic from "next/dynamic";
+const Map = dynamic(() => import("@/components/shared/Map"), { ssr: false });
 import { toast } from "@/hooks/use-toast";
 
 export default function SettingsPage() {
