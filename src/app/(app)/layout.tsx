@@ -3,6 +3,7 @@
 import { AppSidebar } from "@/components/shared/sidebar";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppHeader } from "@/components/shared/header";
+import MobileBottomNav from "@/components/shared/MobileBottomNav";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 
@@ -29,6 +30,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         >
           <AppHeader />
           {children}
+          <MobileBottomNav />
         </main>
       </div>
     </div>

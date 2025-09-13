@@ -78,33 +78,48 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
+  /* Set modern browser defaults and responsive foundations.
+  */
+
+  /* 1. Use a more intuitive box-sizing model and reset defaults. */
+  *, *::before, *::after {
+    @apply border-border; /* Keep your default border color */
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
   }
+  
+  /* 2. Set up responsive typography and smooth scrolling */
+  html {
+    /* Fluid typography: scales font-size smoothly from mobile to desktop */
+    font-size: clamp(0.9rem, 0.825rem + 0.375vw, 1rem); /* Scales from ~14.4px to 16px */
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* 3. Base body styles */
   body {
     @apply bg-background text-foreground;
+    min-height: 100vh;
+    line-height: 1.6;
+    
+    /* A safeguard to prevent horizontal scrolling from poorly-behaved elements. */
+    /* It's always better to fix the root cause, but this is a good fallback. */
+    overflow-x: hidden;
   }
-}
-
-/* Prevent horizontal scroll on mobile/tablet by default */
-html, body, #__next {
-  width: 100%;
-  overflow-x: hidden;
-}
-
-/* Ensure images and media don't cause overflow */
-img, picture, video, iframe {
-  max-width: 100%;
-  height: auto;
-}
-
-/* Constrain large containers on small screens */
-.container, .card, main {
-  max-width: 100%;
-}
-
-/* Fix for absolute positioned elements that may overflow */
-* > img, * > video {
-  display: block;
-  max-width: 100%;
+  
+  /* 4. Make images and other media work better in responsive layouts. */
+  img, picture, video, canvas, svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* 5. Improve accessibility for focusable elements */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: var(--radius);
+  }
 }

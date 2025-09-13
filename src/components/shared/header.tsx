@@ -78,11 +78,11 @@ export function AppHeader() {
       isScrolled && "shadow-md h-14"
     )}>
   <div className="flex w-full items-center justify-between gap-4">
-        {/* Mobile: sidebar toggle */}
-        <div className="md:hidden">
-          <Button variant="ghost" size="icon" onClick={() => setOpenMobile(true)} aria-label="Open navigation">
-            <Menu className="h-5 w-5" />
-          </Button>
+        {/* Left: Uvani logo (mobile only) */}
+        <div className="md:hidden flex items-center mr-2">
+          <Link href="/" aria-label="Uvani home" className="inline-flex items-center">
+            <img src="/UVANI logo.png" alt="Uvani" className="h-10 w-auto object-contain" draggable={false} />
+          </Link>
         </div>
         {/* Left: Current Page Name and Icon */}
         <div className="flex items-center gap-3 min-w-0">

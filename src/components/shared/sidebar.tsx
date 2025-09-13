@@ -27,7 +27,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -48,11 +48,12 @@ export function AppSidebar() {
   }, []);
 
   return (
-    <Sidebar
-      variant="sidebar"
-      collapsible="icon"
-      className="fixed h-full z-50 border-r border-sidebar-border/50 bg-[#1A1126] transition-all duration-500 ease-in-out shadow-xl"
-    >
+    <>
+      <Sidebar
+        variant="sidebar"
+        collapsible="icon"
+        className="hidden md:flex fixed h-full z-50 border-r border-sidebar-border/50 bg-[#1A1126] transition-all duration-500 ease-in-out shadow-xl"
+      >
       <div className="flex flex-col justify-between h-full">
         <div>
           <div className="relative">
@@ -214,5 +215,7 @@ export function AppSidebar() {
         </SidebarFooter>
       </div>
     </Sidebar>
+    </>
   );
 }
+

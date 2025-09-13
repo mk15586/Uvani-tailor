@@ -137,7 +137,7 @@ export default function MeasurementsPage() {
       {/* Main Content Grid */}
       <div className="grid gap-6 md:gap-6 lg:grid-cols-3">
         {/* Client Measurements Section */}
-        <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6">
           <Card className="shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -176,89 +176,156 @@ export default function MeasurementsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Last Updated</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Progress</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredClients.map((client, index) => (
-                    <TableRow key={client.id} className="hover:bg-muted/50">
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-9 w-9">
-                            <AvatarImage src={client.avatar} alt={client.name} />
-                            <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{client.name}</div>
-                            <div className="text-sm text-muted-foreground">{client.email}</div>
+                {/* Desktop/Tablet: show table on md+ */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Client</TableHead>
+                        <TableHead>Last Updated</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Progress</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredClients.map((client, index) => (
+                        <TableRow key={client.id} className="hover:bg-muted/50">
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-9 w-9">
+                                <AvatarImage src={client.avatar} alt={client.name} />
+                                <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium">{client.name}</div>
+                                <div className="text-sm text-muted-foreground">{client.email}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{client.lastUpdated}</TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={client.status === "active" ? "default" : "secondary"}
+                              className="capitalize"
+                            >
+                              {client.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Progress value={client.progress} className="w-24" />
+                              <span className="text-xs text-muted-foreground">{client.progress}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-md">
+                                  <DialogHeader>
+                                    <DialogTitle className="flex items-center gap-2">
+                                      <Ruler className="h-5 w-5 text-primary" /> 
+                                      {client.name}'s Measurements
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                      Detailed measurements profile. All measurements are in inches.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="grid grid-cols-2 gap-4 py-4">
+                                    {Object.entries(MOCK_MEASUREMENTS[client.id as keyof typeof MOCK_MEASUREMENTS]).map(([key, value]) => (
+                                      <div className="space-y-2" key={key}>
+                                        <Label htmlFor={key} className="capitalize text-sm">
+                                          {key.replace(/([A-Z])/g, ' $1').trim()}
+                                        </Label>
+                                        <Input id={key} defaultValue={value} className="text-sm" />
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <DialogFooter className="gap-2 sm:gap-0">
+                                    <Button variant="outline">Export PDF</Button>
+                                    <Button>Save Changes</Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile: stacked client cards list */}
+                <div className="md:hidden space-y-3">
+                  {filteredClients.map((client) => (
+                    <div key={client.id} className="p-3 bg-background rounded-lg border shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={client.avatar} alt={client.name} />
+                          <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium">{client.name}</div>
+                              <div className="text-sm text-muted-foreground">{client.email}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm font-semibold">{client.progress}%</div>
+                              <Badge variant={client.status === 'active' ? 'default' : 'secondary'} className="capitalize mt-1">{client.status}</Badge>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <Progress value={client.progress} className="w-28 h-2" />
+                            </div>
+                            <div className="flex gap-2">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="ghost" size="sm">View</Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-md">
+                                  <DialogHeader>
+                                    <DialogTitle className="flex items-center gap-2">
+                                      <Ruler className="h-5 w-5 text-primary" /> 
+                                      {client.name}'s Measurements
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                      Detailed measurements profile. All measurements are in inches.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="grid grid-cols-2 gap-4 py-4">
+                                    {Object.entries(MOCK_MEASUREMENTS[client.id as keyof typeof MOCK_MEASUREMENTS]).map(([key, value]) => (
+                                      <div className="space-y-2" key={key}>
+                                        <Label htmlFor={key} className="capitalize text-sm">
+                                          {key.replace(/([A-Z])/g, ' $1').trim()}
+                                        </Label>
+                                        <Input id={key} defaultValue={value} className="text-sm" />
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <DialogFooter className="gap-2 sm:gap-0">
+                                    <Button variant="outline">Export PDF</Button>
+                                    <Button>Save Changes</Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+                              <Button variant="ghost" size="sm">More</Button>
+                            </div>
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell>{client.lastUpdated}</TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={client.status === "active" ? "default" : "secondary"}
-                          className="capitalize"
-                        >
-                          {client.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Progress value={client.progress} className="w-24" />
-                          <span className="text-xs text-muted-foreground">{client.progress}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-md">
-                              <DialogHeader>
-                                <DialogTitle className="flex items-center gap-2">
-                                  <Ruler className="h-5 w-5 text-primary" /> 
-                                  {client.name}'s Measurements
-                                </DialogTitle>
-                                <DialogDescription>
-                                  Detailed measurements profile. All measurements are in inches.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="grid grid-cols-2 gap-4 py-4">
-                                {Object.entries(MOCK_MEASUREMENTS[client.id as keyof typeof MOCK_MEASUREMENTS]).map(([key, value]) => (
-                                  <div className="space-y-2" key={key}>
-                                    <Label htmlFor={key} className="capitalize text-sm">
-                                      {key.replace(/([A-Z])/g, ' $1').trim()}
-                                    </Label>
-                                    <Input id={key} defaultValue={value} className="text-sm" />
-                                  </div>
-                                ))}
-                              </div>
-                              <DialogFooter className="gap-2 sm:gap-0">
-                                <Button variant="outline">Export PDF</Button>
-                                <Button>Save Changes</Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
             </CardContent>
             <CardFooter className="justify-between">
               <div className="text-sm text-muted-foreground">
@@ -322,7 +389,7 @@ export default function MeasurementsPage() {
               <CardDescription>Recent orders and delivery locations</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="h-64">
+              <div className="h-48 md:h-64">
                 <Map lat={mapCenter.lat} lng={mapCenter.lng} location={mapCenter.location ?? ""} />
               </div>
               <div className="p-4">
@@ -430,7 +497,9 @@ export default function MeasurementsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
+            {/* Desktop/tablet: full table */}
+            <div className="hidden md:block">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Order ID</TableHead>
@@ -487,7 +556,46 @@ export default function MeasurementsPage() {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
+
+            {/* Mobile: stacked order cards */}
+            <div className="md:hidden space-y-3">
+              {orders.map((order) => (
+                <div
+                  key={order.id}
+                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                    selectedOrder?.id === order.id ? 'bg-muted/30' : 'hover:bg-muted/10'
+                  }`}
+                  onClick={() => {
+                    setSelectedOrder(order as Order);
+                    if (order.lat && order.lng) {
+                      setMapCenter({ lat: order.lat, lng: order.lng, location: order.location });
+                    }
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-primary/10 rounded-md">
+                        <Package className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <div className="font-medium">{order.customer}</div>
+                        <div className="text-xs text-muted-foreground">{format(new Date(order.date), 'MMM d, yyyy')}</div>
+                        <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          <span>{order.location}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">${order.amount.toFixed(2)}</div>
+                      <Badge variant="outline" className="capitalize text-xs mt-1">{order.status}</Badge>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
           <CardFooter className="justify-between">
             <div className="text-sm text-muted-foreground">
