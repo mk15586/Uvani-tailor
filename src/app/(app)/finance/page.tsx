@@ -52,6 +52,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import type { DateRange } from "react-day-picker";
 
 // Mock data for transactions
 const MOCK_TRANSACTIONS = [
@@ -138,7 +139,7 @@ const EXPENSE_CATEGORIES = [
 ];
 
 export default function FinancePage() {
-  const [dateRange, setDateRange] = useState({ from: undefined, to: undefined });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -172,7 +173,24 @@ export default function FinancePage() {
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:gap-8 md:p-8 bg-muted/20">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Mobile app-like header */}
+      <div className="flex items-center justify-between md:hidden">
+        <div>
+          <h2 className="text-lg font-semibold">Finance</h2>
+          <p className="text-xs text-muted-foreground">Overview</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="p-2">
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="p-2">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Desktop header (hidden on mobile) */}
+      <div className="hidden md:flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Financial Dashboard</h1>
           <p className="text-muted-foreground">
@@ -198,16 +216,17 @@ export default function FinancePage() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
+          {/* Metrics - desktop grid, mobile stacked cards */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className="p-3 md:p-4">
+              <CardHeader className="flex items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Total Income</CardTitle>
                 <div className="p-2 rounded-full bg-green-100 text-green-600">
                   <DollarSign className="h-4 w-4" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">₹{totalIncome.toLocaleString('en-IN')}</div>
+                <div className="text-2xl md:text-3xl font-bold">₹{totalIncome.toLocaleString('en-IN')}</div>
                 <div className="flex items-center text-xs text-muted-foreground mt-1">
                   <ArrowUpRight className="h-3 w-3 mr-1 text-green-600" />
                   <span className="text-green-600">+25% from last month</span>
@@ -215,30 +234,30 @@ export default function FinancePage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className="p-3 md:p-4">
+              <CardHeader className="flex items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Today's Income</CardTitle>
                 <div className="p-2 rounded-full bg-blue-100 text-blue-600">
                   <DollarSign className="h-4 w-4" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">₹{todaysIncome.toLocaleString('en-IN')}</div>
+                <div className="text-2xl md:text-3xl font-bold">₹{todaysIncome.toLocaleString('en-IN')}</div>
                  <p className="text-xs text-muted-foreground pt-2">
                     Income received today.
                   </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className="p-3 md:p-4">
+              <CardHeader className="flex items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Withdrawable</CardTitle>
                 <div className="p-2 rounded-full bg-amber-100 text-amber-600">
                   <Wallet className="h-4 w-4" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">₹{withdrawableBalance.toLocaleString('en-IN')}</div>
+                <div className="text-2xl md:text-3xl font-bold">₹{withdrawableBalance.toLocaleString('en-IN')}</div>
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button size="sm" className="w-full mt-2">
@@ -289,6 +308,7 @@ export default function FinancePage() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+            {/* Transactions: hide table on mobile and show stacked cards */}
             <Card className="md:col-span-1 lg:col-span-4">
               <CardHeader>
                 <CardTitle>Order Transactions</CardTitle>
@@ -297,46 +317,61 @@ export default function FinancePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Order ID</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {MOCK_TRANSACTIONS.filter(
-                      (t) => t.category === "Order Payment"
-                    )
-                      .slice(0, 5)
-                      .map((transaction) => (
-                        <TableRow key={transaction.id}>
-                          <TableCell className="font-medium">
-                            {transaction.description.split("#")[1]}
-                          </TableCell>
-                          <TableCell>
-                            {new Date(transaction.date).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                transaction.status === "Completed"
-                                  ? "success"
-                                  : "secondary"
-                              }
-                            >
-                              {transaction.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            ₹{transaction.amount.toFixed(2)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
+                {/* Desktop table */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {MOCK_TRANSACTIONS.filter((t) => t.category === "Order Payment")
+                        .slice(0, 5)
+                        .map((transaction) => (
+                          <TableRow key={transaction.id}>
+                            <TableCell className="font-medium">
+                              {transaction.description.split("#")[1]}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(transaction.date).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={transaction.status === "Completed" ? "success" : "secondary"}
+                              >
+                                {transaction.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">₹{transaction.amount.toFixed(2)}</TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile stacked transaction cards */}
+                <div className="md:hidden space-y-3">
+                  {MOCK_TRANSACTIONS.filter((t) => t.category === "Order Payment").slice(0, 5).map((transaction) => (
+                    <div key={transaction.id} className="bg-card rounded-lg p-3 shadow-sm">
+                      <div className="flex items-start justify-between">
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">{transaction.description}</div>
+                          <div className="text-sm text-muted-foreground truncate">{new Date(transaction.date).toLocaleDateString()}</div>
+                        </div>
+                        <div className="text-right ml-3">
+                          <div className={`font-semibold ${transaction.type === 'Income' ? 'text-green-600' : 'text-red-600'}`}>
+                            {transaction.type === 'Income' ? '+' : '-'}₹{Math.abs(transaction.amount).toLocaleString('en-IN')}
+                          </div>
+                          <Badge variant={transaction.status === 'Completed' ? 'success' : 'secondary'} className="mt-2">{transaction.status}</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
 
@@ -588,6 +623,25 @@ export default function FinancePage() {
           </Card>
         </TabsContent>
       </Tabs>
+        {/* Mobile sticky summary */}
+        <div className="md:hidden fixed left-0 right-0 bottom-4 px-4">
+          <div className="bg-card/95 backdrop-blur-sm border rounded-full p-3 flex items-center justify-between shadow-lg">
+            <div className="flex items-center gap-3">
+              <div>
+                <div className="text-xs text-muted-foreground">Balance</div>
+                <div className="font-semibold">₹{netProfit.toLocaleString('en-IN')}</div>
+              </div>
+              <div className="hidden sm:block border-l h-6 ml-2 pl-3">
+                <div className="text-xs text-muted-foreground">Withdrawable</div>
+                <div className="font-semibold">₹{withdrawableBalance.toLocaleString('en-IN')}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" className="h-9">Withdraw</Button>
+              <Button variant="ghost" size="sm" className="h-9">Details</Button>
+            </div>
+          </div>
+        </div>
     </main>
   );
 }
