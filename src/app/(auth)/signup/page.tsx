@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { motion, AnimatePresence, Variants } from "framer-motion";
+import OtpModal from "@/components/auth/otp-modal";
 import { Separator } from "@/components/ui/separator";
 
 // Floating particles component
@@ -66,16 +67,33 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    // Create ripple effect on button
+  // form fields (bound) so we can show where OTP was sent
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  // OTP UI state
+  const [showOtp, setShowOtp] = useState(false);
+  const [generatedOtp, setGeneratedOtp] = useState<string | null>(null);
+  const [otpInput, setOtpInput] = useState("");
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState<number>(0);
+
+  // cooldown timer for resend
+  useEffect(() => {
+    let timer: any = null;
+    if (resendCooldown > 0) {
+      timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
+  const createRipple = (e: React.FormEvent<HTMLFormElement>) => {
     if (buttonRef.current) {
       const button = buttonRef.current;
       const circle = document.createElement("span");
       const diameter = Math.max(button.clientWidth, button.clientHeight);
       const radius = diameter / 2;
-      
+
       const rect = button.getBoundingClientRect();
       const offsetX = (e.nativeEvent as any).clientX - rect.left;
       const offsetY = (e.nativeEvent as any).clientY - rect.top;
@@ -90,10 +108,51 @@ export default function SignUpPage() {
       }
       button.appendChild(circle);
     }
+  };
+
+  const sendOtp = () => {
+    // simulate sending OTP: generate 6-digit code and start cooldown
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(code);
+    setResendCooldown(45); // 45s cooldown
+    setOtpError(null);
+    // for development, log the code so developer can test
+    // eslint-disable-next-line no-console
+    console.info("Simulated OTP sent to", email || "(no-email)", ":", code);
+    setShowOtp(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    createRipple(e);
+    // simulate account creation then show OTP verification UI
     setTimeout(() => {
       setLoading(false);
-      router.push("/signin");
-    }, 1200);
+      // trigger OTP modal
+      sendOtp();
+    }, 900);
+  };
+
+  const handleVerify = () => {
+    setOtpError(null);
+    const code = otpInput.trim();
+    if (code.length === 0) {
+      setOtpError("Please enter the code.");
+      return;
+    }
+    // Accept any numeric input as valid OTP for this static/demo flow
+    if (/^\d+$/.test(code)) {
+      setShowOtp(false);
+      router.push("/complete-registration");
+    } else {
+      setOtpError("Please enter only numeric digits.");
+    }
+  };
+
+  const handleResend = () => {
+    if (resendCooldown > 0) return;
+    sendOtp();
   };
 
   // Animation variants
@@ -181,43 +240,7 @@ export default function SignUpPage() {
             </p>
           </motion.div>
           
-          <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-            variants={itemVariants}
-          >
-            <div className="space-y-2">
-              <Label htmlFor="first-name" className="text-white/90 text-sm sm:text-base">
-                First Name
-              </Label>
-              <motion.div
-                whileFocus={{ scale: 1.01 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                <Input
-                  id="first-name"
-                  placeholder="Master"
-                  required
-                  className="bg-white/5 border-white/10 text-white backdrop-blur-sm transition-all duration-300 focus:ring-2 focus:ring-primary/50 focus:border-primary/30 h-12 sm:h-14 text-sm sm:text-base"
-                />
-              </motion.div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="last-name" className="text-white/90 text-sm sm:text-base">
-                Last Name
-              </Label>
-              <motion.div
-                whileFocus={{ scale: 1.01 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                <Input
-                  id="last-name"
-                  placeholder="Jee"
-                  required
-                  className="bg-white/5 border-white/10 text-white backdrop-blur-sm transition-all duration-300 focus:ring-2 focus:ring-primary/50 focus:border-primary/30 h-12 sm:h-14 text-sm sm:text-base"
-                />
-              </motion.div>
-            </div>
-          </motion.div>
+          {/* name fields removed - collected in complete-registration */}
           
           <motion.div className="space-y-4" variants={itemVariants}>
             <div className="space-y-2">
@@ -356,6 +379,17 @@ export default function SignUpPage() {
           }
         }
       `}</style>
+      <OtpModal
+        show={showOtp}
+        onClose={() => setShowOtp(false)}
+        emailOrContact={email || "your contact"}
+        otpInput={otpInput}
+        setOtpInput={setOtpInput}
+        otpError={otpError}
+        onVerify={handleVerify}
+        onResend={handleResend}
+        resendCooldown={resendCooldown}
+      />
     </div>
   );
 }
