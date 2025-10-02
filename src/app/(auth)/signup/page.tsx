@@ -110,49 +110,64 @@ export default function SignUpPage() {
     }
   };
 
-  const sendOtp = () => {
-    // simulate sending OTP: generate 6-digit code and start cooldown
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(code);
-    setResendCooldown(45); // 45s cooldown
-    setOtpError(null);
-    // for development, log the code so developer can test
-    // eslint-disable-next-line no-console
-    console.info("Simulated OTP sent to", email || "(no-email)", ":", code);
-    setShowOtp(true);
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const sendOtp = async () => {
+    if (!email) return;
     setLoading(true);
-    createRipple(e);
-    // simulate account creation then show OTP verification UI
-    setTimeout(() => {
+    setOtpError(null);
+    try {
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setShowOtp(true);
+        setResendCooldown(45);
+      } else {
+        setOtpError(data.error || "Failed to send OTP");
+      }
+    } catch (err) {
+      setOtpError("Failed to send OTP");
+    } finally {
       setLoading(false);
-      // trigger OTP modal
-      sendOtp();
-    }, 900);
+    }
   };
 
-  const handleVerify = () => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    createRipple(e);
+    await sendOtp();
+  };
+
+  const handleVerify = async () => {
     setOtpError(null);
     const code = otpInput.trim();
     if (code.length === 0) {
       setOtpError("Please enter the code.");
       return;
     }
-    // Accept any numeric input as valid OTP for this static/demo flow
-    if (/^\d+$/.test(code)) {
-      setShowOtp(false);
-      router.push("/complete-registration");
-    } else {
-      setOtpError("Please enter only numeric digits.");
+    try {
+      const res = await fetch("/api/auth/send-otp", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp: code }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setShowOtp(false);
+        router.push("/complete-registration");
+      } else {
+        setOtpError(data.error || "Invalid OTP");
+      }
+    } catch (err) {
+      setOtpError("Failed to verify OTP");
     }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (resendCooldown > 0) return;
-    sendOtp();
+    await sendOtp();
   };
 
   // Animation variants
@@ -256,6 +271,8 @@ export default function SignUpPage() {
                   type="email"
                   placeholder="masterjee@uvani.com"
                   required
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
                   className="bg-white/5 border-white/10 text-white backdrop-blur-sm transition-all duration-300 focus:ring-2 focus:ring-primary/50 focus:border-primary/30 h-12 sm:h-14 text-sm sm:text-base"
                 />
               </motion.div>
@@ -272,6 +289,8 @@ export default function SignUpPage() {
                   id="password"
                   type="password"
                   required
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="bg-white/5 border-white/10 text-white backdrop-blur-sm transition-all duration-300 focus:ring-2 focus:ring-primary/50 focus:border-primary/30 h-12 sm:h-14 text-sm sm:text-base"
                 />
