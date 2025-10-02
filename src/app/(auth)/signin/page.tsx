@@ -1,6 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,38 +68,49 @@ export default function SignInPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    
     // Create ripple effect on button
     if (buttonRef.current) {
       const button = buttonRef.current;
       const circle = document.createElement("span");
       const diameter = Math.max(button.clientWidth, button.clientHeight);
       const radius = diameter / 2;
-      
       const rect = button.getBoundingClientRect();
-      // This is a workaround as nativeEvent is not available in the same way in all browsers for FormEvent
-      // A more robust solution would involve a click handler on the button itself
       const offsetX = (e.nativeEvent as any).clientX - rect.left;
       const offsetY = (e.nativeEvent as any).clientY - rect.top;
-
       circle.style.width = circle.style.height = `${diameter}px`;
       circle.style.left = `${offsetX - radius}px`;
       circle.style.top = `${offsetY - radius}px`;
       circle.classList.add("ripple");
-      
       const ripple = button.getElementsByClassName("ripple")[0];
-      
       if (ripple) {
         ripple.remove();
       }
-      
       button.appendChild(circle);
     }
-    
+    // Supabase credential check
+    const { data, error } = await supabase
+      .from("tailors")
+      .select("id, email, password")
+      .eq("email", email)
+      .single();
+    if (error || !data) {
+      toast.error("Invalid email or password");
+      setLoading(false);
+      return;
+    }
+    // Compare password (plain text, for demo; use hashing in production)
+    if (data.password !== password) {
+      toast.error("Invalid email or password");
+      setLoading(false);
+      return;
+    }
+    toast.success("Login successful");
     setTimeout(() => {
       setLoading(false);
       router.push("/dashboard");
@@ -189,6 +203,8 @@ export default function SignInPage() {
                   type="email" 
                   placeholder="tailor@uvani.com" 
                   required 
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
                   className="bg-white/5 border-white/10 text-white backdrop-blur-sm transition-all duration-300 focus:ring-2 focus:ring-primary/50 focus:border-primary/30 h-12 sm:h-14 text-sm sm:text-base"
                 />
               </motion.div>
@@ -201,6 +217,8 @@ export default function SignInPage() {
                   type="password" 
                   required 
                   placeholder="••••••••" 
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
                   className="bg-white/5 border-white/10 text-white backdrop-blur-sm transition-all duration-300 focus:ring-2 focus:ring-primary/50 focus:border-primary/30 h-12 sm:h-14 text-sm sm:text-base"
                 />
               </motion.div>
@@ -275,7 +293,8 @@ export default function SignInPage() {
         </motion.form>
       </motion.div>
 
-      <style jsx global>{`
+  <ToastContainer />
+  <style jsx global>{`
         .ripple {
           position: absolute;
           border-radius: 50%;

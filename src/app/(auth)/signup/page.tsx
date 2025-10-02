@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import OtpModal from "@/components/auth/otp-modal";
+import { supabase } from "@/lib/supabaseClient";
 import { Separator } from "@/components/ui/separator";
 
 // Floating particles component
@@ -155,6 +156,15 @@ export default function SignUpPage() {
       });
       const data = await res.json();
       if (data.ok) {
+        // OTP verified, now store email and password in Supabase
+        const { error: insertError } = await supabase.from('tailors').insert({
+          email,
+          password
+        });
+        if (insertError) {
+          setOtpError(insertError.message || 'Failed to save credentials.');
+          return;
+        }
         setShowOtp(false);
         router.push("/complete-registration");
       } else {
