@@ -1,6 +1,14 @@
 "use client";
 
 import { useState } from "react";
+// Minimal country code/flag list for demo; expand as needed
+const COUNTRY_CODES = [
+  { code: '+91', name: 'India', flag: '🇮🇳' },
+  { code: '+1', name: 'USA', flag: '🇺🇸' },
+  { code: '+44', name: 'UK', flag: '🇬🇧' },
+  { code: '+61', name: 'Australia', flag: '🇦🇺' },
+  { code: '+971', name: 'UAE', flag: '🇦🇪' },
+];
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -13,6 +21,83 @@ interface Props {
 
 export function BasicProfileStep({ data, onChange }: Props) {
   const [logoName, setLogoName] = useState<string | null>(null);
+  const [countryCode, setCountryCode] = useState(data.countryCode || '+91');
+
+  // OTP verification state
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpSuccess, setOtpSuccess] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  const handleSendOtp = async () => {
+    setOtpError(null);
+    // Validation: only allow numbers, correct length for country
+    const mobile = (data.mobile || '').replace(/\D/g, '');
+    let valid = true;
+    let errorMsg = '';
+    if (!mobile) {
+      valid = false;
+      errorMsg = 'Mobile number is required';
+    } else if (countryCode === '+91' && mobile.length !== 10) {
+      valid = false;
+      errorMsg = 'Indian mobile number must be 10 digits';
+    } else if (['+1', '+44', '+61', '+971'].includes(countryCode) && mobile.length < 7) {
+      valid = false;
+      errorMsg = 'Please enter a valid mobile number';
+    }
+    if (!valid) {
+      setOtpError(errorMsg);
+      return;
+    }
+    setSending(true);
+    setOtpSuccess(false);
+    try {
+      // Always send full international number
+      const fullPhone = `${countryCode}${mobile}`;
+      const res = await fetch("/api/auth/send-sms-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: fullPhone })
+      });
+      const result = await res.json();
+      if (result.ok) {
+        setOtpSent(true);
+      } else {
+        setOtpError(result.error || "Failed to send OTP");
+      }
+    } catch (err) {
+      setOtpError("Failed to send OTP");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    setVerifying(true);
+    setOtpError(null);
+    setOtpSuccess(false);
+    try {
+      const fullPhone = `${countryCode}${data.mobile.replace(/^0+/, '')}`;
+      const res = await fetch("/api/auth/send-sms-otp", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: fullPhone, otp })
+      });
+      const result = await res.json();
+      if (result.ok) {
+        setOtpSuccess(true);
+        setOtpError(null);
+      } else {
+        setOtpError(result.error || "Invalid OTP");
+      }
+    } catch (err) {
+      setOtpError("Failed to verify OTP");
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -40,12 +125,58 @@ export function BasicProfileStep({ data, onChange }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="mobile">Mobile Number</Label>
-          <Input
-            id="mobile"
-            value={data.mobile || ""}
-            onChange={(e) => onChange({ mobile: e.target.value })}
-            placeholder="e.g., +919876543210"
-          />
+          <div className="flex gap-2 items-center">
+            <select
+              value={countryCode}
+              onChange={e => {
+                setCountryCode(e.target.value);
+                onChange({ countryCode: e.target.value });
+              }}
+              className="h-10 rounded-md border px-2 bg-white dark:bg-gray-700 text-base"
+              style={{ minWidth: 70 }}
+              disabled={otpSuccess}
+            >
+              {COUNTRY_CODES.map(c => (
+                <option key={c.code} value={c.code}>
+                  {c.flag} {c.code}
+                </option>
+              ))}
+            </select>
+            <Input
+              id="mobile"
+              value={data.mobile || ""}
+              onChange={(e) => {
+                onChange({ mobile: e.target.value });
+                setOtpSent(false);
+                setOtpSuccess(false);
+                setOtp("");
+              }}
+              placeholder="9876543210"
+              disabled={otpSuccess}
+              style={{ maxWidth: 180 }}
+            />
+            <Button type="button" size="sm" onClick={handleSendOtp} disabled={sending || !data.mobile || otpSuccess}>
+              {sending ? "Sending..." : otpSuccess ? "Verified" : "Verify"}
+            </Button>
+          </div>
+          {otpSent && !otpSuccess && (
+            <div className="mt-2 flex gap-2 items-center">
+              <Input
+                id="otp"
+                value={otp}
+                onChange={e => setOtp(e.target.value)}
+                placeholder="Enter OTP"
+                className="w-32"
+                maxLength={6}
+                disabled={verifying}
+              />
+              <Button type="button" size="sm" onClick={handleVerifyOtp} disabled={verifying || otp.length !== 6}>
+                {verifying ? "Verifying..." : "Submit OTP"}
+              </Button>
+            </div>
+          )}
+          {otpError && <div className="text-red-600 text-xs mt-1">{otpError}</div>}
+          {otpSuccess && <div className="text-green-600 text-xs mt-1">Mobile verified!</div>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email Address</Label>

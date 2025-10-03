@@ -156,15 +156,9 @@ export default function SignUpPage() {
       });
       const data = await res.json();
       if (data.ok) {
-        // OTP verified, now store email and password in Supabase
-        const { error: insertError } = await supabase.from('tailors').insert({
-          email,
-          password
-        });
-        if (insertError) {
-          setOtpError(insertError.message || 'Failed to save credentials.');
-          return;
-        }
+        // OTP verified, now save email and password to localStorage
+        localStorage.setItem('uvani_signup_email', email);
+        localStorage.setItem('uvani_signup_password', password);
         setShowOtp(false);
         router.push("/complete-registration");
       } else {
@@ -265,7 +259,7 @@ export default function SignUpPage() {
             </p>
           </motion.div>
           
-          {/* name fields removed - collected in complete-registration */}
+          {/* Only email and password fields remain */}
           
           <motion.div className="space-y-4" variants={itemVariants}>
             <div className="space-y-2">

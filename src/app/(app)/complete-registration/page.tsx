@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from "next/navigation";
 import { BasicProfileStep } from "@/components/auth/steps/basic-profile-step";
@@ -20,13 +20,9 @@ export default function CompleteRegistrationPage() {
   const [form, setForm] = useState<any>({});
   const [direction, setDirection] = useState(1);
   const router = useRouter();
-  // Retrieve password from localStorage (once)
-  const [signupPassword] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('uvani_signup_password') || null;
-    }
-    return null;
-  });
+  // Prefill email and password from localStorage
+  const [signupEmail] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('uvani_signup_email') || '' : ''));
+  const [signupPassword] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('uvani_signup_password') || '' : ''));
 
   const patch = (patchObj: any) => setForm((prev: any) => ({ ...prev, ...patchObj }));
 
@@ -51,10 +47,13 @@ export default function CompleteRegistrationPage() {
       try {
         // Prepare data mapping
         const {
-          fullName, shopName, mobile, email, logoFile,
+          fullName, shopName, mobile, logoFile,
           experience, specialization, skills, services, address, pincode, workingHours,
           accountHolder, bankName, branch, accountNumber, ifsc, upi, chequeFile
         } = form;
+        // Use email and password from localStorage
+        const email = signupEmail;
+        const password = signupPassword;
 
         let profile_picture = null;
         let cancelled_photo = null;
@@ -86,14 +85,15 @@ export default function CompleteRegistrationPage() {
           shop_address: address,
           pincode,
           working_hours: workingHours,
-          password: signupPassword,
+          password,
         };
         // Remove id if present in form (defensive)
         if ('id' in insertObj) delete insertObj.id;
         const { error: insertError } = await supabase.from('tailors').insert(insertObj);
         if (insertError) throw insertError;
-        // Remove password from localStorage after registration
+        // Remove email and password from localStorage after registration
         if (typeof window !== 'undefined') {
+          localStorage.removeItem('uvani_signup_email');
           localStorage.removeItem('uvani_signup_password');
         }
         setSuccess(true);
@@ -114,6 +114,12 @@ export default function CompleteRegistrationPage() {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
+  // Prefill email in form if possible
+  useEffect(() => {
+    if (signupEmail && !form.email) {
+      setForm((prev: any) => ({ ...prev, email: signupEmail }));
+    }
+  }, [signupEmail]);
   const ActiveStepComponent = steps.find((step) => step.id === currentStep)?.component;
   const progress = (currentStep / steps.length) * 100;
 
