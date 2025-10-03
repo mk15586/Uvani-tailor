@@ -224,13 +224,13 @@ export default function CompleteRegistrationPage() {
                     initial={{ scale: 0, rotate: -180 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ duration: 0.5, type: "spring" }}
-                    className="w-14 h-14 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-xl border border-purple-300/30 p-2"
+                    className="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-xl border border-purple-300/30 p-2"
                   >
                     <Image 
                       src="/UVANI logo.png" 
                       alt="UVANI Logo" 
-                      width={60} 
-                      height={60}
+                      width={80} 
+                      height={80}
                       className="w-full h-full object-contain filter brightness-0 invert"
                     />
                   </motion.div>

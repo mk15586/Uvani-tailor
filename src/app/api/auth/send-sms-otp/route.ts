@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       `${BASE_URL}/gateway/devices/${DEVICE_ID}/send-sms`,
       {
         recipients: [phone],
-        message: `Your profile completion verification OTP is: ${otp}\n\nDo not share this OTP with anyone. If you did not request this, please ignore this message.`
+        message: `Your UVANI profile completion verification OTP is: ${otp}\n\nDo not share this OTP with anyone. If you did not request this, please ignore this message.`
       },
       {
         headers: { 'x-api-key': API_KEY }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 // Minimal country code/flag list for demo; expand as needed
 const COUNTRY_CODES = [
   { code: '+91', name: 'India', flag: '🇮🇳' },
@@ -22,6 +22,14 @@ interface Props {
 export function BasicProfileStep({ data, onChange }: Props) {
   const [logoName, setLogoName] = useState<string | null>(null);
   const [countryCode, setCountryCode] = useState(data.countryCode || '+91');
+
+  // Ensure parent form always has a countryCode
+  useEffect(() => {
+    if (!data.countryCode) {
+      setCountryCode('+91');
+      onChange({ countryCode: '+91' });
+    }
+  }, []);
 
   // OTP verification state
   const [otpSent, setOtpSent] = useState(false);
@@ -89,8 +97,10 @@ export function BasicProfileStep({ data, onChange }: Props) {
       if (result.ok) {
         setOtpSuccess(true);
         setOtpError(null);
+        onChange({ otpVerified: true });
       } else {
         setOtpError(result.error || "Invalid OTP");
+        onChange({ otpVerified: false });
       }
     } catch (err) {
       setOtpError("Failed to verify OTP");
