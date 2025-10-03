@@ -116,6 +116,21 @@ export default function SignUpPage() {
     setLoading(true);
     setOtpError(null);
     try {
+      // Check if user already exists with this email
+      const { data: user, error } = await supabase
+        .from('tailors')
+        .select('email,password')
+        .eq('email', email)
+        .single();
+      if (user) {
+        // Compare password (plain, for demo; use hash in production)
+        if (user.password === password) {
+          setOtpError('User already exists with this email and password. Please sign in.');
+          setLoading(false);
+          return;
+        }
+      }
+      // Proceed to send OTP
       const res = await fetch("/api/auth/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -302,6 +317,17 @@ export default function SignUpPage() {
             </div>
           </motion.div>
           
+          {/* Show error message if present */}
+          {otpError && (
+            <motion.div
+              className="text-red-500 text-sm text-center mb-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              {otpError}
+            </motion.div>
+          )}
           <motion.div
             variants={itemVariants}
             whileHover={{ scale: 1.01 }}

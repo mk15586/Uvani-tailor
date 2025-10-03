@@ -40,14 +40,53 @@ export default function CompleteRegistrationPage() {
     return urlData?.publicUrl || null;
   };
 
+  // Validation helper
+  const validateStep = () => {
+    // Step 1: Personal
+    if (currentStep === 1) {
+      if (!form.fullName || form.fullName.trim().length < 2) return 'Full name is required.';
+      if (!form.shopName || form.shopName.trim().length < 2) return 'Shop name is required.';
+      if (!form.countryCode || !form.mobile) return 'Mobile number and country code are required.';
+      const mobile = (form.mobile || '').replace(/\D/g, '');
+      if (form.countryCode === '+91' && mobile.length !== 10) return 'Indian mobile number must be 10 digits.';
+      if (!form.otpVerified) return 'Please verify your mobile number.';
+      if (!form.email || !/^\S+@\S+\.\S+$/.test(form.email)) return 'Valid email is required.';
+    }
+    // Step 2: Professional
+    if (currentStep === 2) {
+      if (!form.experience || isNaN(Number(form.experience))) return 'Experience (years) is required.';
+      if (!form.specialization) return 'Specialization is required.';
+      if (!form.skills) return 'Skills are required.';
+      if (!form.services) return 'Services offered are required.';
+      if (!form.address) return 'Shop address is required.';
+      if (!form.pincode || !/^\d{6}$/.test(form.pincode)) return 'Valid 6-digit pincode is required.';
+      if (!form.workingHours) return 'Working hours are required.';
+    }
+    // Step 3: Bank
+    if (currentStep === 3) {
+      if (!form.accountHolder) return 'Account holder name is required.';
+      if (!form.bankName) return 'Bank name is required.';
+      if (!form.branch) return 'Branch name is required.';
+      if (!form.accountNumber || !/^\d{9,18}$/.test(form.accountNumber)) return 'Valid account number is required.';
+      if (!form.ifsc || !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(form.ifsc)) return 'Valid IFSC code is required.';
+      if (!form.upi) return 'UPI ID is required.';
+    }
+    return null;
+  };
+
   const handleNext = async () => {
     setError(null);
+    const validationError = validateStep();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     if (currentStep === steps.length) {
       setSubmitting(true);
       try {
         // Prepare data mapping
         const {
-          fullName, shopName, mobile, logoFile,
+          fullName, shopName, mobile, logoFile, countryCode,
           experience, specialization, skills, services, address, pincode, workingHours,
           accountHolder, bankName, branch, accountNumber, ifsc, upi, chequeFile
         } = form;
@@ -68,7 +107,7 @@ export default function CompleteRegistrationPage() {
         const insertObj: any = {
           name: fullName,
           business_name: shopName,
-          phone_number: mobile,
+          phone_number: countryCode + (mobile || '').replace(/\D/g, ''),
           email,
           profile_picture,
           account_holder_name: accountHolder,
