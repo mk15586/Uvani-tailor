@@ -1,0 +1,418 @@
+// data.ts
+
+/**
+ * Defines the structure for a garment, including its name, stitching cost, and optional display properties.
+ */
+export const AppColors = {
+  primary: '#6D2E46',
+  accentGold: '#C0A063',
+  darkBackground: '#1A1A2E',
+  cardBackground: 'rgba(255, 255, 255, 0.08)',
+  text: '#FFFFFF',
+  subtleText: 'rgba(255, 255, 255, 0.7)',
+  lightBorder: 'rgba(192, 160, 99, 0.3)',
+  shadow: 'rgba(0, 0, 0, 0.3)',
+  gradientBackground: 'linear-gradient(135deg, #2c1a2b 0%, #1a1a2e 50%, #16213e 100%)',
+  messageBackground: 'linear-gradient(135deg, #3D2B1F 0%, #5B453A 100%)',
+  offerGradient: 'linear-gradient(135deg, rgba(192, 160, 99, 0.15) 0%, rgba(109, 46, 70, 0.15) 100%)',
+};
+
+export interface Garment {
+  name: string;
+  stitchingCost?: number;
+  subtitle?: string;
+  icon?: string;
+  imageUrl?: string;
+  fabricRequired?: {
+    S: number;
+    M: number;
+    L: number;
+    XL: number;
+    XXL: number;
+    XXXL: number;
+  };
+}
+
+export interface Fabric {
+  name: string;
+  pricePerMeter: number;
+}
+
+export const colorOptions: string[] = [
+  "Black", "White", "Red", "Blue", "Green", "Yellow", "Pink", "Purple",
+  "Orange", "Brown", "Beige", "Maroon", "Navy", "Olive", "Turquoise",
+  "Grey", "Gold", "Silver", "Peach", "Cream"
+];
+
+export const FABRIC_CATEGORIES = [
+  { id: "mens", label: "MEN" },
+  { id: "womens", label: "WOMEN" },
+  { id: "kids", label: "KIDS" },
+];
+
+export const mensData = {
+  fabrics: [
+    { name: "Cotton", pricePerMeter: 130 },
+    { name: "Linen", pricePerMeter: 400 },
+    { name: "Silk", pricePerMeter: 350 },
+    { name: "Wool", pricePerMeter: 220 },
+    { name: "Branded Suiting (Raymond Siyaram)", pricePerMeter: 900 },
+    { name: "Madhubani Khadi", pricePerMeter: 100 },
+    { name: "Bhagalpuri Khadi", pricePerMeter: 120 },
+    { name: "Andhra Khadi", pricePerMeter: 100 },
+    { name: "Hemp Fabric", pricePerMeter: 200 },
+    { name: "Polyester", pricePerMeter: 70 },
+    { name: "Velvet", pricePerMeter: 400 },
+    { name: "Chikankari", pricePerMeter: 500 },
+    { name: "Paper Cotton", pricePerMeter: 140 },
+    { name: "Tussar Cotton", pricePerMeter: 170 },
+    { name: "White Fabric", pricePerMeter: 170 },
+    { name: "Galaxy Linen", pricePerMeter: 140 },
+    { name: "Thailand Linen", pricePerMeter: 140 },
+    { name: "Khadi Cotton", pricePerMeter: 140 },
+    { name: "Pajama Cotton", pricePerMeter: 140 },
+    { name: "Paithani Fabric", pricePerMeter: 180 },
+    { name: "Dusuti", pricePerMeter: 120 },
+    { name: "Pure Cotton", pricePerMeter: 100 },
+    { name: "Centari", pricePerMeter: 100 },
+    { name: "Char Sutti", pricePerMeter: 130 },
+    { name: "Matka Khadi", pricePerMeter: 120 },
+    { name: "Rayon Chicken", pricePerMeter: 350 }
+  ],
+  garments: [
+    {
+      name: 'Pant',
+      stitchingCost: 350,
+      fabricRequired: { S: 2, M: 2, L: 2, XL: 2, XXL: 2, XXXL: 3 },
+      imageUrl: "/garments-images/Pant.png"
+    },
+    {
+      name: 'Shirt',
+      stitchingCost: 250,
+      fabricRequired: { S: 3, M: 3, L: 3, XL: 3, XXL: 4, XXXL: 4 },
+      imageUrl: "/garments-images/Shirt.png"
+    },
+    {
+      name: 'Kurta',
+      stitchingCost: 250,
+      fabricRequired: { S: 3, M: 3, L: 4, XL: 4, XXL: 4, XXXL: 4 },
+      imageUrl: "/garments-images/Kurta.png"
+    },
+    {
+      name: 'Paijama',
+      stitchingCost: 100,
+      fabricRequired: { S: 2, M: 2, L: 3, XL: 3, XXL: 3, XXXL: 3 },
+      imageUrl: "/garments-images/Paijama.png"
+    },
+    {
+      name: 'Blazer',
+      stitchingCost: 2000,
+      fabricRequired: { S: 4, M: 4, L: 4, XL: 4, XXL: 5, XXXL: 5 },
+      imageUrl: "/garments-images/Blazer.png"
+    },
+    {
+      name: 'Coat (Set)',
+      stitchingCost: 2800,
+      fabricRequired: { S: 4, M: 4, L: 5, XL: 5, XXL: 5, XXXL: 5 },
+      imageUrl: "/garments-images/Coat (Set).png"
+    },
+    {
+      name: 'Vastcoat',
+      stitchingCost: 800,
+      fabricRequired: { S: 1, M: 1, L: 1, XL: 2, XXL: 2, XXXL: 2 },
+      imageUrl: "/garments-images/Vastcoat.png"
+    },
+    {
+      name: 'Bandi',
+      stitchingCost: 800,
+      fabricRequired: { S: 2, M: 2, L: 2, XL: 2, XXL: 3, XXXL: 3 },
+      imageUrl: "/garments-images/Bandi.png"
+    },
+    {
+      name: 'Paithani Suit',
+      stitchingCost: 450,
+      fabricRequired: { S: 5, M: 5, L: 6, XL: 6, XXL: 6, XXXL: 6 },
+      imageUrl: "/garments-images/Paithani Suit.png"
+    },
+    {
+      name: 'Sherwani',
+      stitchingCost: 0,
+      fabricRequired: { S: 4, M: 4, L: 5, XL: 5, XXL: 5, XXXL: 5 },
+      imageUrl: "/garments-images/Sherwani.png"
+    },
+    {
+      name: 'Shirt + Pant Set',
+      stitchingCost: 700,
+      fabricRequired: { S: 4, M: 4, L: 5, XL: 5, XXL: 6, XXXL: 6 },
+      imageUrl: "/garments-images/Shirt+Pant Set.png"
+    },
+    {
+      name: 'Kurta + Paijama (Set)',
+      stitchingCost: 450,
+      fabricRequired: { S: 5, M: 5, L: 6, XL: 6, XXL: 7, XXXL: 7 },
+      imageUrl: "/garments-images/Kurta + Paijama (Set).png"
+    },
+    {
+      name: 'Coat + Pant (Set)',
+      stitchingCost: 3400,
+      fabricRequired: { S: 5, M: 6, L: 6, XL: 7, XXL: 7, XXXL: 8 },
+      imageUrl: "/garments-images/Coat + Pant (Set).png"
+    },
+    {
+      name: 'Coat + Vastcoat + Pant',
+      stitchingCost: 4300,
+      fabricRequired: { S: 6, M: 7, L: 7, XL: 8, XXL: 8, XXXL: 9 },
+      imageUrl: "/garments-images/Coat + Vastcoat + Pant.png"
+    },
+    {
+      name: 'Blazer + Pant (Set)',
+      stitchingCost: 2600,
+      fabricRequired: { S: 5, M: 5, L: 6, XL: 6, XXL: 7, XXXL: 7 },
+      imageUrl: "/garments-images/Blazer+Pant (Set).png"
+    },
+    {
+      name: 'Sherwani + Paijama (Set)',
+      stitchingCost: 150,
+      fabricRequired: { S: 6, M: 6, L: 7, XL: 7, XXL: 8, XXXL: 8 },
+      imageUrl: "/garments-images/Sherwani+Paijama (Set).png"
+    }
+  ]
+};
+
+export const womensData = {
+  fabrics: [
+    { name: "Satin", pricePerMeter: 100 },
+    { name: "German Cotton", pricePerMeter: 140 },
+    { name: "Glace Cotton", pricePerMeter: 160 },
+    { name: "Chicken Georgette", pricePerMeter: 300 },
+    { name: "Pure Cotton Printed", pricePerMeter: 170 },
+    { name: "Printed Rayon Cotton", pricePerMeter: 170 },
+    { name: "Printed Cambric Cotton", pricePerMeter: 170 },
+    { name: "Chunri Print Cotton", pricePerMeter: 170 },
+    { name: "Jaipuri Cotton (Sequence Work)", pricePerMeter: 450 },
+    { name: "Party Wear Stretchable", pricePerMeter: 360 },
+    { name: "Party Wear Suit Fabric", pricePerMeter: 280 },
+    { name: "Rayon Chicken", pricePerMeter: 350 },
+    { name: "Organza", pricePerMeter: 330 },
+    { name: "Net", pricePerMeter: 330 },
+    { name: "Jimmy Choo Fabric", pricePerMeter: 300 },
+    { name: "Velvet with Work", pricePerMeter: 330 },
+    { name: "Plain Velvet", pricePerMeter: 280 },
+    { name: "Banarsi Tissue", pricePerMeter: 320 },
+    { name: "Banarsi", pricePerMeter: 330 },
+    { name: "Banarsi Silk", pricePerMeter: 310 },
+    { name: "Golden Blouse Fabric", pricePerMeter: 330 },
+    { name: "Lucknowi Chicken", pricePerMeter: 330 },
+  ],
+  garments: [
+    {
+      name: 'Saree Blouse',
+      subtitle: 'Perfect fit for any saree',
+      stitchingCost: 500,
+      imageUrl: "/garments-images/Saree Blouse.png"
+    },
+    {
+      name: 'Lehenga Choli',
+      subtitle: 'For festive occasions',
+      stitchingCost: 2500,
+      imageUrl: "/garments-images/Lehenga Choli.png"
+    },
+    {
+      name: 'Kurti',
+      subtitle: 'Comfortable and stylish',
+      stitchingCost: 600,
+      imageUrl: "/garments-images/Kurti.png"
+    },
+    {
+      name: 'Anarkali Suit',
+      subtitle: 'Elegant and graceful',
+      stitchingCost: 1200,
+      imageUrl: "/garments-images/Anarkali Suit.png"
+    },
+    {
+      name: 'Salwar Kameez',
+      subtitle: 'Classic and versatile',
+      stitchingCost: 900,
+      imageUrl: "/garments-images/Salwar Kameez.png"
+    },
+    {
+      name: 'Western Dress',
+      subtitle: 'Modern and chic',
+      stitchingCost: 1500,
+      imageUrl: "/garments-images/Western Dress.png"
+    },
+    {
+      name: 'Gown / Evening Wear',
+      subtitle: 'For special events',
+      stitchingCost: 2000,
+      imageUrl: "/garments-images/Gown Wear.png"
+    },
+    {
+      name: 'Dupatta Customization',
+      subtitle: 'Add a personal touch',
+      stitchingCost: 300,
+      imageUrl: "/garments-images/Dupatta Customization.png"
+    },
+  ]
+};
+
+export const kidsData = {
+  fabrics: [
+    { name: "Cotton", pricePerMeter: 130 },
+    { name: "Linen", pricePerMeter: 400 },
+    { name: "Silk", pricePerMeter: 350 },
+    { name: "Wool", pricePerMeter: 220 },
+    { name: "Branded Suiting (Raymond Siyaram)", pricePerMeter: 900 },
+    { name: "Madhubani Khadi", pricePerMeter: 100 },
+    { name: "Bhagalpuri Khadi", pricePerMeter: 120 },
+    { name: "Andhra Khadi", pricePerMeter: 100 },
+    { name: "Hemp Fabric", pricePerMeter: 200 },
+    { name: "Polyester", pricePerMeter: 70 },
+    { name: "Velvet", pricePerMeter: 400 },
+    { name: "Chikankari", pricePerMeter: 500 },
+    { name: "Paper Cotton", pricePerMeter: 140 },
+    { name: "Tussar Cotton", pricePerMeter: 170 },
+    { name: "White Fabric", pricePerMeter: 170 },
+    { name: "Galaxy Linen", pricePerMeter: 140 },
+    { name: "Thailand Linen", pricePerMeter: 140 },
+    { name: "Khadi Cotton", pricePerMeter: 140 },
+    { name: "Pajama Cotton", pricePerMeter: 140 },
+    { name: "Paithani Fabric", pricePerMeter: 180 },
+    { name: "Dusuti", pricePerMeter: 120 },
+    { name: "Pure Cotton", pricePerMeter: 100 },
+    { name: "Centari", pricePerMeter: 100 },
+    { name: "Char Sutti", pricePerMeter: 130 },
+    { name: "Matka Khadi", pricePerMeter: 120 },
+    { name: "Rayon Chicken", pricePerMeter: 350 }
+  ],
+  garments: [
+    {
+      name: 'Shirt',
+      subtitle: 'Smart and stylish',
+      stitchingCost: 250,
+      fabricRequired: { S: 3, M: 3, L: 3, XL: 3, XXL: 4, XXXL: 4 },
+      imageUrl: "/garments-images/Shirt.png"
+    },
+    {
+      name: 'Shorts',
+      subtitle: 'Perfect for active kids',
+      imageUrl: "/garments-images/Shorts.png"
+    },
+    {
+      name: 'Ethnic Set',
+      subtitle: 'For festivals and fun',
+      imageUrl: "/garments-images/Ethnic Set.png"
+    },
+    {
+      name: 'School Uniform',
+      subtitle: 'Durable and easy',
+      imageUrl: "/garments-images/School Uniform.png"
+    },
+    {
+      name: 'Pant',
+      subtitle: 'Trousers or Chinos',
+      stitchingCost: 350,
+      fabricRequired: { S: 2, M: 2, L: 2, XL: 2, XXL: 2, XXXL: 3 },
+      imageUrl: "/garments-images/Pant.png"
+    },
+    {
+      name: 'Blazer',
+      subtitle: 'Stylish kids blazer',
+      stitchingCost: 2000,
+      fabricRequired: { S: 4, M: 4, L: 4, XL: 4, XXL: 5, XXXL: 5 },
+      imageUrl: "/garments-images/Blazer.png"
+    },
+    {
+      name: 'Kurta',
+      subtitle: 'Traditional kids kurta',
+      stitchingCost: 250,
+      fabricRequired: { S: 3, M: 3, L: 4, XL: 4, XXL: 4, XXXL: 4 },
+      imageUrl: "/garments-images/Kurta.png"
+    },
+    {
+      name: 'Sherwani',
+      subtitle: 'Elegant sherwanis',
+      stitchingCost: 0,
+      fabricRequired: { S: 4, M: 4, L: 5, XL: 5, XXL: 5, XXXL: 5 },
+      imageUrl: "/garments-images/Sherwani.png"
+    },
+    {
+      name: 'Vastcoat',
+      subtitle: 'Smart kids waistcoat',
+      stitchingCost: 800,
+      fabricRequired: { S: 1, M: 1, L: 1, XL: 2, XXL: 2, XXXL: 2 },
+      imageUrl: "/garments-images/Vastcoat.png"
+    },
+    {
+      name: 'Bandi',
+      subtitle: 'Traditional kids bandi',
+      stitchingCost: 800,
+      fabricRequired: { S: 2, M: 2, L: 2, XL: 2, XXL: 3, XXXL: 3 },
+      imageUrl: "/garments-images/Bandi.png"
+    },
+    {
+      name: 'Paijama',
+      subtitle: 'Cozy kids paijama',
+      stitchingCost: 100,
+      fabricRequired: { S: 2, M: 2, L: 3, XL: 3, XXL: 3, XXXL: 3 },
+      imageUrl: "/garments-images/Paijama.png"
+    },
+    {
+      name: 'Paithani Suit',
+      subtitle: 'Ornate kids suits',
+      stitchingCost: 450,
+      fabricRequired: { S: 5, M: 5, L: 6, XL: 6, XXL: 6, XXXL: 6 },
+      imageUrl: "/garments-images/Paithani Suit.png"
+    },
+    {
+      name: 'Shirt + Pant Set',
+      subtitle: 'Complete kids set',
+      stitchingCost: 700,
+      fabricRequired: { S: 4, M: 4, L: 5, XL: 5, XXL: 6, XXXL: 6 },
+      imageUrl: "/garments-images/Shirt+Pant Set.png"
+    },
+    {
+      name: 'Coat (Set)',
+      subtitle: 'Warm kids coat sets',
+      stitchingCost: 2800,
+      fabricRequired: { S: 4, M: 4, L: 5, XL: 5, XXL: 5, XXXL: 5 },
+      imageUrl: "/garments-images/Coat (Set).png"
+    },
+    {
+      name: 'Kurta + Paijama (Set)',
+      stitchingCost: 450,
+      fabricRequired: { S: 5, M: 5, L: 6, XL: 6, XXL: 7, XXXL: 7 },
+      imageUrl: "/garments-images/Kurta + Paijama (Set).png"
+    },
+    {
+      name: 'Coat + Pant (Set)',
+      stitchingCost: 3400,
+      fabricRequired: { S: 5, M: 6, L: 6, XL: 7, XXL: 7, XXXL: 8 },
+      imageUrl: "/garments-images/Coat + Pant (Set).png"
+    },
+    {
+      name: 'Coat + Vastcoat + Pant',
+      stitchingCost: 4300,
+      fabricRequired: { S: 6, M: 7, L: 7, XL: 8, XXL: 8, XXXL: 9 },
+      imageUrl: "/garments-images/Coat + Vastcoat + Pant.png"
+    },
+    {
+      name: 'Blazer + Pant (Set)',
+      stitchingCost: 2600,
+      fabricRequired: { S: 5, M: 5, L: 6, XL: 6, XXL: 7, XXXL: 7 },
+      imageUrl: "/garments-images/Blazer+Pant (Set).png"
+    },
+    {
+      name: 'Sherwani + Paijama (Set)',
+      stitchingCost: 150,
+      fabricRequired: { S: 6, M: 6, L: 7, XL: 7, XXL: 8, XXXL: 8 },
+      imageUrl: "/garments-images/Sherwani+Paijama (Set).png"
+    }
+  ]
+};
+
+export const clothingData = {
+  mens: mensData,
+  womens: womensData,
+  kids: kidsData
+};

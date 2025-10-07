@@ -5,8 +5,8 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
 interface MapProps {
-  lat: number;
-  lng: number;
+  lat?: number;
+  lng?: number;
   location?: string;
   className?: string;
   style?: React.CSSProperties;
@@ -20,9 +20,29 @@ const Map: React.FC<MapProps> = ({ lat, lng, location = "", className, style }) 
   useEffect(() => {
     if (!mapRef.current) return;
 
+    // guard if lat/lng not provided
+    if (typeof lat !== 'number' || typeof lng !== 'number') {
+      // show empty container until coords available
+      return;
+    }
+
     // create map once
     if (!mapInstance.current) {
-      mapInstance.current = L.map(mapRef.current).setView([lat, lng], 13);
+      // ensure the container doesn't stack above header
+      mapRef.current.style.position = mapRef.current.style.position || 'relative';
+      mapRef.current.style.zIndex = mapRef.current.style.zIndex || '0';
+
+  mapInstance.current = L.map(mapRef.current).setView([lat, lng], 13);
+
+      // Lower the z-index of leaflet panes so they don't overlap sticky headers
+      try {
+        const panes = mapInstance.current.getPanes();
+        Object.values(panes).forEach((p: any) => {
+          try { if (p && p.style) p.style.zIndex = '0'; } catch (e) { /* ignore */ }
+        });
+      } catch (e) {
+        // ignore
+      }
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',

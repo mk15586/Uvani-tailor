@@ -1,18 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Search, ChevronDown, X, Clock, MapPin, Briefcase, Navigation, Loader2 } from "lucide-react";
+import { Search, ChevronDown, X, Check, Clock, MapPin, Briefcase, Navigation, Loader2 } from "lucide-react";
 
 const SPECIALIZATION_OPTIONS = [
   { value: 'men', label: "Men's Wear" },
   { value: 'women', label: "Women's Wear" },
-  { value: 'kids', label: "Kids' Wear" },
-  { value: 'traditional', label: "Traditional Wear" },
-  { value: 'wedding', label: "Wedding & Bridal" },
-  { value: 'alterations', label: "Alterations & Repairs" },
+  
 ];
 
 const SKILLS_SUGGESTIONS = [
@@ -20,6 +17,44 @@ const SKILLS_SUGGESTIONS = [
   "Custom Fitting", "Hand Stitching", "Machine Stitching", 
   "Fabric Selection", "Design Consultation",
 ];
+
+const FABRICS_LIST = [
+  "Cotton",
+  "Linen",
+  "Silk",
+  "Wool",
+  "Branded Suiting (Raymond Siyaram)",
+  "Madhubani Khadi",
+  "Bhagalpuri Khadi",
+  "Andhra Khadi",
+  "Hemp Fabric",
+  "Polyester",
+  "Velvet",
+  "Chikankari",
+  "Paper Cotton",
+  "Tussar Cotton",
+  "White Fabric",
+  "Galaxy Linen",
+  "Thailand Linen",
+  "Khadi Cotton",
+  "Pajama Cotton",
+  "Paithani Fabric",
+  "Dusuti",
+  "Pure Cotton",
+  "Centari",
+  "Char Sutti",
+  "Matka Khadi",
+  "Rayon Chicken",
+];
+
+const GARMENTS_BY_CATEGORY = {
+  men: [
+    'Pant','Shirt','Kurta','Paijama','Blazer','Coat (Set)','Vastcoat','Bandi','Paithani Suit','Sherwani','Shirt + Pant Set','Kurta + Paijama (Set)','Coat + Pant (Set)','Coat + Vastcoat + Pant','Blazer + Pant (Set)','Sherwani + Paijama (Set)'
+  ],
+  women: [
+    'Saree Blouse','Lehenga Choli','Kurti','Anarkali Suit','Salwar Kameez','Western Dress','Gown / Evening Wear','Dupatta Customization'
+  ]
+};
 
 const DAYS_OF_WEEK = [
   { value: 'monday', label: 'Mon', fullLabel: 'Monday' },
@@ -211,6 +246,27 @@ function LocationPicker({ address, pincode, onAddressChange, onPincodeChange }) 
 
           onAddressChange(fullAddress || "Location detected");
           onPincodeChange(detectedPincode);
+
+          // Attempt to save coordinates to Supabase if we have a registered email in localStorage
+          try {
+            const email = typeof window !== 'undefined' ? localStorage.getItem('uvani_signup_email') : null;
+            if (email) {
+              const { error: upErr } = await supabase
+                .from('tailors')
+                .update({ latitude: latitude, longitude: longitude })
+                .eq('email', email);
+              if (upErr) {
+                console.error('Failed to save coordinates to Supabase', upErr);
+                setLocationError('Address detected but failed to save coordinates to profile');
+              } else {
+                // optional visual cue could be handled by parent via onChange as well
+                console.log('Coordinates saved for', email, latitude, longitude);
+              }
+            }
+          } catch (err) {
+            console.error('Error saving coordinates:', err);
+            setLocationError('Address detected but failed to save coordinates to profile');
+          }
 
           if (!detectedPincode) {
             setLocationError("Address detected, but pincode not available for this location. Please enter manually.");
@@ -452,10 +508,132 @@ export function ProfessionalDetailsStep({ data, onChange }: Props) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="services" className="text-sm sm:text-base">Services Offered</Label>
-          <Textarea id="services" value={data.services || ""} onChange={(e) => onChange({ services: e.target.value })} placeholder="E.g., Custom stitching, alterations, embroidery work, wedding dress design..." rows={4} className="resize-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base min-h-[100px]" />
-          <p className="text-xs text-gray-500 mt-1">Describe the services you offer in detail ({(data.services || '').length}/500 characters)</p>
+          <Label className="flex items-center gap-2 text-sm sm:text-base">
+            <Briefcase size={16} className="text-gray-500 flex-shrink-0" />
+            <span>Do you also provide fabric?</span>
+          </Label>
+
+          <div role="radiogroup" aria-label="Provide fabric" className="inline-flex rounded-lg overflow-hidden border bg-transparent">
+            {[{ val: true, label: 'Yes' }, { val: false, label: 'No' }].map((opt, idx) => {
+              const selected = data.fabricProvided === opt.val;
+              return (
+                <label
+                  key={String(opt.val)}
+                  aria-checked={selected}
+                  role="radio"
+                  className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 text-sm font-medium transition-colors cursor-pointer select-none ${selected ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200'} ${idx === 0 ? 'border-r' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="fabricProvided"
+                    value={String(opt.val)}
+                    checked={selected}
+                    onChange={() => onChange({ fabricProvided: opt.val })}
+                    className="sr-only"
+                  />
+                  {selected && <Check size={16} className="flex-shrink-0" />}
+                  <span>{opt.label}</span>
+                </label>
+              );
+            })}
+          </div>
+
+          <p className="text-xs text-gray-500 mt-1">Choose whether you supply fabric for orders</p>
         </div>
+
+        {data.fabricProvided === true && (
+          <div className="space-y-3">
+            <Label className="text-sm sm:text-base">Set prices for fabrics you supply</Label>
+            <p className="text-xs text-gray-500">Enter the price per meter you will charge for each fabric. These are set by you and will be shown to customers.</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-auto p-2 border rounded-lg bg-white dark:bg-gray-800">
+              {FABRICS_LIST.map((fabric) => {
+                const currentPrices = data.fabricPrices || {};
+                const value = currentPrices[fabric] !== undefined ? String(currentPrices[fabric]) : '';
+                return (
+                  <div key={fabric} className="flex items-center gap-3 p-2 rounded-md bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{fabric}</div>
+                    </div>
+                    <div className="w-36">
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        step={1}
+                        value={value}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          const next = { ...(data.fabricPrices || {}) };
+                          if (val === '') {
+                            delete next[fabric];
+                          } else {
+                            next[fabric] = Number(val);
+                          }
+                          onChange({ fabricPrices: next });
+                        }}
+                        placeholder="Price / m"
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Stitching costs editor based on specialization */}
+        {Array.isArray(data.specialization) && data.specialization.length > 0 && (
+          <div className="space-y-3">
+            <Label className="text-sm sm:text-base">Set stitching cost for selected garment types</Label>
+            <p className="text-xs text-gray-500">Only garments from your selected specializations are shown. Enter the stitching cost you charge for each garment.</p>
+
+            <div className="grid grid-cols-1 gap-4">
+              {['men','women'].map(cat => {
+                if (!data.specialization.includes(cat)) return null;
+                const garments = GARMENTS_BY_CATEGORY[cat];
+                return (
+                  <div key={cat} className="space-y-2">
+                    <div className="text-sm font-medium capitalize">{cat === 'men' ? 'Men' : 'Women'} garments</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-2 border rounded-lg bg-white dark:bg-gray-800 max-h-72 overflow-auto">
+                      {garments.map((g) => {
+                        const current = data.stitchingCosts || {};
+                        const val = current[g] !== undefined ? String(current[g]) : '';
+                        return (
+                          <div key={g} className="flex items-center gap-3 p-2 rounded-md bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">{g}</div>
+                            </div>
+                            <div className="w-36">
+                              <Input
+                                type="number"
+                                inputMode="numeric"
+                                min={0}
+                                step={1}
+                                value={val}
+                                onChange={(e) => {
+                                  const v = e.target.value.replace(/[^0-9]/g, '');
+                                  const next = { ...(data.stitchingCosts || {}) };
+                                  if (v === '') delete next[g]; else next[g] = Number(v);
+                                  onChange({ stitchingCosts: next });
+                                }}
+                                placeholder="Stitching ₹"
+                                className="text-sm"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        
       </div>
 
       <div className="space-y-4 sm:space-y-6 pt-4 sm:pt-6 border-t">

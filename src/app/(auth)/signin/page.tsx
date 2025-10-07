@@ -9,6 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 
 // Floating particles component
@@ -70,6 +80,17 @@ export default function SignInPage() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  // Forgot password states
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetting, setResetting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -111,6 +132,16 @@ export default function SignInPage() {
       return;
     }
     toast.success("Login successful");
+    // persist signed-in email so Settings and other pages can load the tailor
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('uvani_signup_email', data.email);
+        // optionally keep password for flows that expect it (registration uses this)
+        localStorage.setItem('uvani_signup_password', password);
+      } catch (e) {
+        // ignore storage errors
+      }
+    }
     setTimeout(() => {
       setLoading(false);
       router.push("/dashboard");
@@ -223,6 +254,8 @@ export default function SignInPage() {
                 />
               </motion.div>
             </div>
+            {/* placeholder for layout spacing (forgot link moved below Sign In) */}
+            <div className="h-0" />
           </motion.div>
           
           <motion.div variants={itemVariants} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
@@ -259,6 +292,139 @@ export default function SignInPage() {
               </AnimatePresence>
             </Button>
           </motion.div>
+
+          {/* Forgot password link shown below Sign In */}
+          <motion.div className="flex justify-center mt-3" variants={itemVariants}>
+            <button
+              type="button"
+              onClick={() => { setShowForgot(prev => !prev); setForgotEmail(email || ""); }}
+              className="text-sm text-white/90 font-medium transition transform duration-150 ease-out hover:scale-105 hover:bg-white/10 px-2 py-1 rounded-md"
+              aria-label="Forgot your password"
+            >
+              Forgot your password?
+            </button>
+          </motion.div>
+
+          {/* Forgot password dialog */}
+          <Dialog open={showForgot} onOpenChange={(open) => { setShowForgot(open); if (!open) { setOtp(''); setOtpSent(false); setOtpVerified(false); } }}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Forgot Password</DialogTitle>
+                <DialogDescription>Enter your registered email to receive a one-time code.</DialogDescription>
+              </DialogHeader>
+
+              {!otpSent && !otpVerified && (
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <Label className="text-sm">Email</Label>
+                    <Input
+                      type="email"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      placeholder="tailor@uvani.com"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="text-sm text-muted-foreground">We will validate this email before sending the OTP.</div>
+                </div>
+              )}
+
+              {otpSent && !otpVerified && (
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <Label className="text-sm">Enter OTP</Label>
+                    <Input type="text" value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="6-digit code" className="mt-1" />
+                  </div>
+                </div>
+              )}
+
+              {otpVerified && (
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <Label className="text-sm">New Password</Label>
+                    <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Confirm Password</Label>
+                    <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="mt-1" />
+                  </div>
+                </div>
+              )}
+
+              <DialogFooter>
+                <div className="flex items-center gap-2 w-full">
+                  <Button variant="ghost" onClick={() => setShowForgot(false)}>Cancel</Button>
+
+                  {!otpSent && !otpVerified && (
+                    <Button onClick={async () => {
+                      if (!forgotEmail) return toast.error('Please enter your registered email');
+                      try {
+                        // validate email exists
+                        const { data: exists, error: existsErr } = await supabase.from('tailors').select('id').eq('email', forgotEmail).maybeSingle();
+                        if (existsErr) {
+                          console.error(existsErr);
+                          return toast.error('Failed to validate email');
+                        }
+                        if (!exists) {
+                          return toast.error('Email not found. Please check the address you entered.');
+                        }
+
+                        setSendingOtp(true);
+                        const res = await fetch('/api/auth/send-otp', {
+                          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: forgotEmail })
+                        });
+                        const body = await res.json();
+                        if (!res.ok || body.error) {
+                          toast.error(body.error || 'Failed to send OTP');
+                          setSendingOtp(false);
+                          return;
+                        }
+                        setOtpSent(true);
+                        toast.success('OTP sent to your email');
+                      } catch (err) {
+                        console.error(err);
+                        toast.error('Failed to send OTP');
+                      } finally { setSendingOtp(false); }
+                    }}>{sendingOtp ? 'Sending...' : 'Send OTP'}</Button>
+                  )}
+
+                  {otpSent && !otpVerified && (
+                    <>
+                      <Button variant="ghost" onClick={() => { setOtpSent(false); setOtp(''); }}>Back</Button>
+                      <Button onClick={async () => {
+                        if (!otp) return toast.error('Enter OTP');
+                        try {
+                          setVerifyingOtp(true);
+                          const res = await fetch('/api/auth/send-otp', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: forgotEmail, otp }) });
+                          const body = await res.json();
+                          if (!res.ok || body.error) { toast.error(body.error || 'Invalid OTP'); setVerifyingOtp(false); return; }
+                          setOtpVerified(true); toast.success('OTP verified');
+                        } catch (err) { console.error(err); toast.error('OTP verification failed'); } finally { setVerifyingOtp(false); }
+                      }}>{verifyingOtp ? 'Verifying...' : 'Verify OTP'}</Button>
+                    </>
+                  )}
+
+                  {otpVerified && (
+                    <>
+                      <Button variant="ghost" onClick={() => { setShowForgot(false); router.push('/dashboard'); }}>Skip and continue</Button>
+                      <Button onClick={async () => {
+                        if (!newPassword) return toast.error('Please enter a new password');
+                        if (newPassword !== confirmPassword) return toast.error('Passwords do not match');
+                        try {
+                          setResetting(true);
+                          const { error } = await supabase.from('tailors').update({ password: newPassword }).eq('email', forgotEmail);
+                          if (error) { toast.error(error.message || 'Failed to reset password'); setResetting(false); return; }
+                          toast.success('Password changed. Redirecting...');
+                          setTimeout(() => router.push('/dashboard'), 900);
+                        } catch (err) { console.error(err); toast.error('Failed to reset password'); } finally { setResetting(false); }
+                      }}>{resetting ? 'Saving...' : 'Change Password'}</Button>
+                    </>
+                  )}
+                </div>
+              </DialogFooter>
+              <DialogClose />
+            </DialogContent>
+          </Dialog>
           
           <motion.div 
             className="relative w-full flex items-center justify-center py-2"

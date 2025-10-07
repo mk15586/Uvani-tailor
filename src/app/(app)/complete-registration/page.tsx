@@ -29,15 +29,32 @@ export default function CompleteRegistrationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  // Diagnostic: log supabase URL (build-time env) so we can verify the client is pointed at the expected project
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        // NOTE: process.env values are inlined at build time for client code
+        // This helps ensure the running app is using the expected Supabase project
+        // It's safe to log the project URL in development for debugging.
+        // eslint-disable-next-line no-console
+        console.log('Supabase project URL (client):', process.env.NEXT_PUBLIC_SUPABASE_URL);
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, []);
 
-  const uploadFile = async (file: File, pathPrefix: string) => {
+  const uploadFile = async (file: File, type: 'profile' | 'cheque') => {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${pathPrefix}-${Date.now()}.${fileExt}`;
-    const { data, error } = await supabase.storage.from('tailor-assets').upload(fileName, file, { upsert: true });
+    let folder = '';
+    if (type === 'profile') folder = 'profile-pic';
+    if (type === 'cheque') folder = 'cancelled-cheque';
+    const fileName = `${folder}/${Date.now()}-${file.name}`;
+    const { data, error } = await supabase.storage.from('Images').upload(fileName, file, { upsert: true });
     if (error) throw error;
     // Get public URL
-    const { data: urlData } = supabase.storage.from('tailor-assets').getPublicUrl(fileName);
-    return urlData?.publicUrl || null;
+    const { data: urlData } = supabase.storage.from('Images').getPublicUrl(fileName);
+    return { publicUrl: urlData?.publicUrl || null, path: fileName };
   };
 
   // Validation helper
@@ -57,7 +74,7 @@ export default function CompleteRegistrationPage() {
       if (!form.experience || isNaN(Number(form.experience))) return 'Experience (years) is required.';
       if (!form.specialization) return 'Specialization is required.';
       if (!form.skills) return 'Skills are required.';
-      if (!form.services) return 'Services offered are required.';
+  // 'Services offered' is now optional
       if (!form.address) return 'Shop address is required.';
       if (!form.pincode || !/^\d{6}$/.test(form.pincode)) return 'Valid 6-digit pincode is required.';
       if (!form.workingHours) return 'Working hours are required.';
@@ -95,21 +112,39 @@ export default function CompleteRegistrationPage() {
         const password = signupPassword;
 
         let profile_picture = null;
+        let profile_picture_path = null;
         let cancelled_photo = null;
         if (logoFile) {
-          profile_picture = await uploadFile(logoFile, 'profile');
+          const uploaded = await uploadFile(logoFile, 'profile');
+          profile_picture = uploaded.publicUrl;
+          profile_picture_path = uploaded.path;
         }
         if (chequeFile) {
-          cancelled_photo = await uploadFile(chequeFile, 'cheque');
+          const uploadedCheque = await uploadFile(chequeFile, 'cheque');
+          cancelled_photo = uploadedCheque.publicUrl;
         }
 
         // Insert into Supabase (do NOT include id)
+        // Normalize specialties: if both men and women selected, store ['Both']
+        const specialtiesValue = (() => {
+          if (!specialization) return null;
+          if (Array.isArray(specialization)) {
+            const hasMen = specialization.includes('men');
+            const hasWomen = specialization.includes('women');
+            if (hasMen && hasWomen) return ['Both'];
+            return specialization;
+          }
+          // single value
+          return [specialization];
+        })();
+
         const insertObj: any = {
           name: fullName,
           business_name: shopName,
           phone_number: countryCode + (mobile || '').replace(/\D/g, ''),
           email,
           profile_picture,
+          profile_picture_path,
           account_holder_name: accountHolder,
           bank_name: bankName,
           branch_name: branch,
@@ -118,18 +153,30 @@ export default function CompleteRegistrationPage() {
           upi_id: upi,
           cancelled_photo,
           experience_years: experience ? parseInt(experience) : null,
-          specialties: specialization ? [specialization] : null,
+          specialties: specialtiesValue,
           skills: skills ? skills.split(',').map((s: string) => s.trim()) : null,
           services_offered: services ? services.split(',').map((s: string) => s.trim()) : null,
           shop_address: address,
           pincode,
           working_hours: workingHours,
+          provide_fabric: form.fabricProvided === true,
+          fabric_cost: form.fabricPrices && Object.keys(form.fabricPrices).length ? form.fabricPrices : null,
+          stitching_cost: form.stitchingCosts && Object.keys(form.stitchingCosts).length ? form.stitchingCosts : null,
           password,
         };
         // Remove id if present in form (defensive)
         if ('id' in insertObj) delete insertObj.id;
-        const { error: insertError } = await supabase.from('tailors').insert(insertObj);
-        if (insertError) throw insertError;
+        const insertResp = await supabase.from('tailors').insert(insertObj);
+        // Log full response for diagnostics
+        // eslint-disable-next-line no-console
+        console.log('tailors insert response:', insertResp);
+        if (insertResp.error) {
+          // surface the full error to the UI and console so we can see which policy/table is failing
+          // eslint-disable-next-line no-console
+          console.error('Supabase insert error:', insertResp.error);
+          setError(insertResp.error.message || JSON.stringify(insertResp.error));
+          throw insertResp.error;
+        }
         // Remove email and password from localStorage after registration
         if (typeof window !== 'undefined') {
           localStorage.removeItem('uvani_signup_email');

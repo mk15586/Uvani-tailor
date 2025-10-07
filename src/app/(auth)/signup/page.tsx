@@ -116,19 +116,16 @@ export default function SignUpPage() {
     setLoading(true);
     setOtpError(null);
     try {
-      // Check if user already exists with this email
-      const { data: user, error } = await supabase
+      // Check if an account already exists with this email
+      const { data: existing, error: existErr } = await supabase
         .from('tailors')
-        .select('email,password')
+        .select('id,email')
         .eq('email', email)
         .single();
-      if (user) {
-        // Compare password (plain, for demo; use hash in production)
-        if (user.password === password) {
-          setOtpError('User already exists with this email and password. Please sign in.');
-          setLoading(false);
-          return;
-        }
+      if (existErr == null && existing) {
+        setOtpError('An account already exists with this email. Please sign in or use password recovery.');
+        setLoading(false);
+        return;
       }
       // Proceed to send OTP
       const res = await fetch("/api/auth/send-otp", {
