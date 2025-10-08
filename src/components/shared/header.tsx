@@ -171,7 +171,9 @@ export function AppHeader() {
   };
 
   useEffect(() => {
+    let mounted = true;
     const loadProfile = async () => {
+      if (!mounted) return;
       try {
         let email: string | null = null;
         try {
@@ -179,11 +181,11 @@ export function AppHeader() {
           if (userData?.user?.email) email = userData.user.email;
         } catch (e) {}
         if (!email && typeof window !== 'undefined') email = localStorage.getItem('uvani_signup_email');
-  if (!email) return;
+        if (!email) return;
 
-  setProfileEmail(email);
+        setProfileEmail(email);
 
-  const { data, error } = await supabase.from('tailors').select('name,profile_picture,avatar').eq('email', email).maybeSingle();
+        const { data, error } = await supabase.from('tailors').select('name,profile_picture,avatar').eq('email', email).maybeSingle();
         if (error || !data) return;
         setProfileName(data.name || null);
         let pp = data.profile_picture || data.avatar || null;
@@ -201,6 +203,13 @@ export function AppHeader() {
       }
     };
     loadProfile();
+
+    const onProfileUpdated = (ev: any) => {
+      // re-run loadProfile when other parts of the app signal an update
+      loadProfile();
+    };
+    window.addEventListener('uvani:profile-updated', onProfileUpdated as EventListener);
+    return () => { mounted = false; window.removeEventListener('uvani:profile-updated', onProfileUpdated as EventListener); };
   }, []);
 
   return (

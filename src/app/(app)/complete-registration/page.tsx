@@ -215,9 +215,17 @@ export default function CompleteRegistrationPage() {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('uvani_signup_email');
           localStorage.removeItem('uvani_signup_password');
+          try {
+            // notify other parts of the app (header) that profile was created/updated
+            window.dispatchEvent(new CustomEvent('uvani:profile-updated', { detail: { email } }));
+          } catch (e) {
+            // ignore in non-browser environments
+          }
         }
         setSuccess(true);
-        setTimeout(() => router.push("/dashboard"), 1200);
+        // After successful registration, redirect to the login page so the user
+        // can sign in with the credentials they just registered.
+        setTimeout(() => router.push("/signin"), 1200);
       } catch (err: any) {
         setError(err.message || 'Failed to register.');
       } finally {
@@ -474,7 +482,11 @@ export default function CompleteRegistrationPage() {
                   <span>{currentStep === steps.length ? '🎉' : '→'}</span>
                 </motion.button>
             {error && <div className="text-red-600 text-sm mt-2">{error}</div>}
-            {success && <div className="text-green-600 text-sm mt-2">Registration complete! Redirecting...</div>}
+            {success && (
+              <div className="text-green-600 text-sm mt-2">
+                Registeration completed please login with your registered credentials
+              </div>
+            )}
               </div>
             </motion.div>
           </div>

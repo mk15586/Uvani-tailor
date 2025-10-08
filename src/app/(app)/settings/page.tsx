@@ -58,6 +58,77 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 
+function ActiveSessionsDialog() {
+  const [open, setOpen] = useState(false);
+  const [count, setCount] = useState<number>(1);
+  const [loading, setLoading] = useState(false);
+
+  const fetchCount = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/account/active-sessions');
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Failed to fetch');
+      setCount(Number(body.count || 0));
+    } catch (err: any) {
+      toast({ title: 'Failed to fetch sessions', description: err?.message || String(err) });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const router = useRouter();
+  const signOutAll = async () => {
+    try {
+      setLoading(true);
+      const emailStored = typeof window !== 'undefined' ? localStorage.getItem('uvani_signup_email') : null;
+      const res = await fetch('/api/account/signout-others', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: emailStored }) });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Failed');
+      toast({ title: 'Signed out from all devices', description: body.message || '' });
+      // Also sign out locally and redirect to signin
+      try { await supabase.auth.signOut(); } catch (e) { console.warn('Local signout failed', e); }
+      try { if (typeof window !== 'undefined') { localStorage.removeItem('uvani_signup_email'); localStorage.removeItem('uvani_settings'); } } catch (e) {}
+      router.push('/signin');
+    } catch (err: any) {
+      toast({ title: 'Sign out failed', description: err?.message || String(err) });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) fetchCount(); }}>
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-8 text-xs hover:bg-primary/10">
+            View
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Active Sessions</DialogTitle>
+            <DialogDescription>Manage devices that currently have access to your account.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="text-center">
+              <div className="text-4xl font-bold">{loading ? '...' : count}</div>
+              <div className="text-sm text-muted-foreground">devices have access</div>
+            </div>
+            <div className="space-y-2">
+              <Textarea value={"If you believe any device is unauthorized, sign out other devices and contact support."} readOnly />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => fetchCount()} disabled={loading}>Refresh</Button>
+            <Button variant="destructive" onClick={signOutAll} disabled={loading}>Sign out from all devices</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 function ChangePasswordDialog() {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState('');
@@ -237,10 +308,11 @@ export default function SettingsPage() {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const router = useRouter();
+  
   const [timeZone, setTimeZone] = useState("UTC+1");
-  const [currency, setCurrency] = useState("USD");
   const [language, setLanguage] = useState("English");
+  const [deletionReason, setDeletionReason] = useState('');
+  const [requestingDeletion, setRequestingDeletion] = useState(false);
   const [tailorLoaded, setTailorLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -260,7 +332,6 @@ export default function SettingsPage() {
         setEmailNotifications(Boolean(s.emailNotifications));
         setSmsNotifications(Boolean(s.smsNotifications));
         setTimeZone(s.timeZone || "UTC+1");
-        setCurrency(s.currency || "USD");
         setLanguage(s.language || "English");
         if (s.lat) setLat(s.lat);
         if (s.lng) setLng(s.lng);
@@ -325,6 +396,115 @@ export default function SettingsPage() {
     setIsEditing(false);
     setAvatarFile(null);
     loadTailor();
+  };
+
+  // Toggle dark mode and persist immediately to Supabase
+  const toggleDarkMode = async (val: boolean | number | string | undefined) => {
+    const newVal = Boolean(val);
+    // optimistic UI
+    setDarkMode(newVal);
+    try {
+      // apply immediately to document for instant feedback
+      if (typeof window !== 'undefined') {
+        if (newVal) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+      }
+      const emailStored = typeof window !== 'undefined' ? localStorage.getItem('uvani_signup_email') : null;
+      if (!emailStored) {
+        toast({ title: 'Not signed in', description: 'Cannot save preference.' });
+        return;
+      }
+      const { error } = await supabase.from('tailors').update({ dark_mode: newVal }).eq('email', emailStored);
+      if (error) throw error;
+      // persist in local storage settings object
+      try {
+        const saved = JSON.parse(localStorage.getItem('uvani_settings') || '{}');
+        saved.darkMode = newVal;
+        localStorage.setItem('uvani_settings', JSON.stringify(saved));
+      } catch (e) {}
+      // notify layout/header to re-fetch if needed
+      try { window.dispatchEvent(new CustomEvent('uvani:profile-updated', { detail: { email: emailStored } })); } catch (e) {}
+      toast({ title: 'Preference saved', description: `Dark mode ${newVal ? 'enabled' : 'disabled'}` });
+    } catch (err: any) {
+      // revert on failure
+      setDarkMode((prev) => !prev);
+      if (typeof window !== 'undefined') {
+        if (!newVal) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+      }
+      console.error('Failed to save dark mode', err);
+      toast({ title: 'Save failed', description: err?.message || String(err) });
+    }
+  };
+
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn('Sign out failed', e);
+    }
+    try { if (typeof window !== 'undefined') { localStorage.removeItem('uvani_signup_email'); localStorage.removeItem('uvani_settings'); } } catch (e) {}
+    toast({ title: 'Signed out', description: 'You have been signed out.' });
+    router.push('/signin');
+  };
+
+  const exportCsv = async () => {
+    try {
+      const emailStored = typeof window !== 'undefined' ? localStorage.getItem('uvani_signup_email') : null;
+      if (!emailStored) return toast({ title: 'Not signed in' });
+      // fetch data for this tailor - orders and profile
+      const { data: orders } = await supabase.from('orders').select('*').eq('tailor_email', emailStored);
+      const { data: tailor } = await supabase.from('tailors').select('*').eq('email', emailStored).maybeSingle();
+      const payload = { tailor, orders };
+      const csvRows: string[] = [];
+      // Simple CSV: Orders header
+      csvRows.push('order_id,customer_name,status,total_amount,created_at');
+      (orders || []).forEach((o: any) => {
+        const row = [
+          (o.id || '').toString().replace(/"/g,'""'),
+          (o.customer_name || '').toString().replace(/"/g,'""'),
+          (o.status || '').toString().replace(/"/g,'""'),
+          (o.total_amount || '').toString().replace(/"/g,'""'),
+          (o.created_at || '').toString().replace(/"/g,'""'),
+        ];
+        csvRows.push(row.map((c) => `"${c}"`).join(','));
+      });
+      const csvContent = csvRows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `uvani_export_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast({ title: 'Export started', description: 'CSV download should begin shortly.' });
+    } catch (err: any) {
+      console.error('Export failed', err);
+      toast({ title: 'Export failed', description: err?.message || String(err) });
+    }
+  };
+
+  const requestAccountDeletion = async () => {
+    try {
+      if (!deletionReason || deletionReason.trim().length < 10) return toast({ title: 'Please provide a reason (at least 10 characters)' });
+      setRequestingDeletion(true);
+      const emailStored = typeof window !== 'undefined' ? localStorage.getItem('uvani_signup_email') : null;
+      const res = await fetch('/api/account/request-deletion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailStored, reason: deletionReason }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Request failed');
+      toast({ title: 'Request sent', description: 'Your deletion request has been sent to the admin.' });
+      setDeletionReason('');
+    } catch (err: any) {
+      toast({ title: 'Request failed', description: err?.message || String(err) });
+    } finally {
+      setRequestingDeletion(false);
+    }
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -393,9 +573,8 @@ export default function SettingsPage() {
       setNotifications(Boolean(data.notifications));
       setEmailNotifications(Boolean(data.email_notifications));
       setSmsNotifications(Boolean(data.sms_notifications));
-      setTimeZone(data.time_zone || 'UTC+1');
-      setCurrency(data.currency || 'USD');
-      setLanguage(data.language || 'English');
+  setTimeZone(data.time_zone || 'UTC+1');
+  setLanguage(data.language || 'English');
       if (data.latitude) setLat(Number(data.latitude));
       if (data.longitude) setLng(Number(data.longitude));
       
@@ -503,9 +682,8 @@ export default function SettingsPage() {
         latitude: lat || null,
         longitude: lng || null,
         profile_picture: publicAvatarUrl,
-        time_zone: timeZone,
-        currency,
-        language,
+  time_zone: timeZone,
+  language,
         updated_at: new Date().toISOString(), // Add updated_at timestamp
       };
 
@@ -551,6 +729,7 @@ export default function SettingsPage() {
       
       // Reload data to confirm save
       await loadTailor(emailStored);
+      try { window.dispatchEvent(new CustomEvent('uvani:profile-updated', { detail: { email: emailStored } })); } catch (e) {}
       
     } catch (err: any) {
       console.error('❌ Save error (full object):', err);
@@ -854,7 +1033,7 @@ export default function SettingsPage() {
                     </div>
                     <Switch 
                       checked={darkMode} 
-                      onCheckedChange={(v) => setDarkMode(Boolean(v))}
+                      onCheckedChange={(v) => toggleDarkMode(v)}
                       className="data-[state=checked]:bg-primary"
                     />
                   </div>
@@ -953,27 +1132,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="currency" className="text-sm font-medium flex items-center gap-1.5">
-                      <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
-                      Currency
-                    </Label>
-                    <div className="relative group">
-                      <CreditCard className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary pointer-events-none" />
-                      <select 
-                        id="currency"
-                        value={currency}
-                        onChange={(e) => setCurrency(e.target.value)}
-                        className="w-full pl-10 pr-3 py-2.5 border rounded-lg bg-background hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 appearance-none cursor-pointer"
-                      >
-                        <option value="USD">USD - US Dollar</option>
-                        <option value="EUR">EUR - Euro</option>
-                        <option value="GBP">GBP - British Pound</option>
-                        <option value="NGN">NGN - Nigerian Naira</option>
-                        <option value="INR">INR - Indian Rupee</option>
-                      </select>
-                    </div>
-                  </div>
+                  {/* Currency selector removed per requirements */}
                   
                   <div className="space-y-2">
                     <Label htmlFor="language" className="text-sm font-medium flex items-center gap-1.5">
@@ -989,10 +1148,7 @@ export default function SettingsPage() {
                         className="w-full pl-10 pr-3 py-2.5 border rounded-lg bg-background hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 appearance-none cursor-pointer"
                       >
                         <option value="English">English</option>
-                        <option value="Spanish">Spanish</option>
-                        <option value="French">French</option>
-                        <option value="German">German</option>
-                        <option value="Arabic">Arabic</option>
+                        <option value="Hindi">Hindi</option>
                       </select>
                     </div>
                   </div>
@@ -1120,9 +1276,7 @@ export default function SettingsPage() {
                     <div className="text-xs text-muted-foreground">Device access</div>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" className="h-8 text-xs hover:bg-primary/10">
-                  View
-                </Button>
+                  <ActiveSessionsDialog />
               </div>
             </CardContent>
           </Card>
@@ -1144,6 +1298,7 @@ export default function SettingsPage() {
                 variant="outline" 
                 className="w-full justify-between hover:bg-muted/50 transition-all duration-200 group"
                 size="sm"
+                onClick={exportCsv}
               >
                 <span className="flex items-center gap-2">
                   <Download className="h-3.5 w-3.5" />
@@ -1158,6 +1313,7 @@ export default function SettingsPage() {
                 variant="outline" 
                 className="w-full justify-between text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 hover:text-orange-700 dark:hover:text-orange-300 transition-all duration-200 group border-orange-200 dark:border-orange-900"
                 size="sm"
+                onClick={handleSignOut}
               >
                 <span className="flex items-center gap-2">
                   <LogOut className="h-3.5 w-3.5" />

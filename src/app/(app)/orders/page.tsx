@@ -137,14 +137,26 @@ export default function OrdersPage() {
     let mounted = true;
     const fetchOrders = async () => {
       setIsLoading(true);
-      const { data: ordersData, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1000);
-
-      if (error || !mounted || !ordersData) {
-        console.error(error);
+      let ordersData: any = null;
+      try {
+        const resp = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(1000);
+        ordersData = resp.data;
+        if (resp.error) {
+          // Log real error and bail
+          console.error('Supabase orders error:', resp.error);
+          setIsLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to fetch orders:', err);
+        setIsLoading(false);
+        return;
+      }
+      if (!mounted || !ordersData) {
         setIsLoading(false);
         return;
       }
@@ -363,7 +375,7 @@ export default function OrdersPage() {
                          {order.status}
                        </Badge>
                      </TableCell>
-                     <TableCell className="hidden md:table-cell">{format(new Date(order.date), 'PP')}</TableCell>
+                    <TableCell className="hidden md:table-cell">{order.date ? format(new Date(order.date), 'PP') : '—'}</TableCell>
                      <TableCell className="text-right">₹{order.amount.toFixed(2)}</TableCell>
                      <TableCell className="text-right">
                        <DropdownMenu>
