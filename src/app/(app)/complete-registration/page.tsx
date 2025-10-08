@@ -78,6 +78,30 @@ export default function CompleteRegistrationPage() {
       if (!form.address) return 'Shop address is required.';
       if (!form.pincode || !/^\d{6}$/.test(form.pincode)) return 'Valid 6-digit pincode is required.';
       if (!form.workingHours) return 'Working hours are required.';
+      // stitching cost must be provided
+      if (!form.stitchingCosts || Object.keys(form.stitchingCosts).length === 0) return 'Stitching cost is required.';
+      // ensure stitching costs are numeric-only
+      if (form.stitchingCosts && Object.keys(form.stitchingCosts).length) {
+        const vals = Object.values(form.stitchingCosts || {});
+        const allNumeric = vals.every((v: any) => {
+          if (typeof v === 'number') return !isNaN(v);
+          if (typeof v === 'string') return /^\d+$/.test(v.trim());
+          return false;
+        });
+        if (!allNumeric) return 'Stitching cost values must be numeric (digits only).';
+      }
+      // if fabric is provided by the tailor, fabric prices must be provided
+      const fabricProvided = form.fabricProvided === true || (typeof form.fabricProvided === 'string' && form.fabricProvided.toLowerCase() === 'yes');
+      if (fabricProvided) {
+        if (!form.fabricPrices || Object.keys(form.fabricPrices).length === 0) return 'Please provide fabric prices when Fabric Provide is set to Yes.';
+        const fvals = Object.values(form.fabricPrices || {});
+        const fabricsNumeric = fvals.every((v: any) => {
+          if (typeof v === 'number') return !isNaN(v);
+          if (typeof v === 'string') return /^\d+$/.test(v.trim());
+          return false;
+        });
+        if (!fabricsNumeric) return 'Fabric price values must be numeric (digits only).';
+      }
     }
     // Step 3: Bank
     if (currentStep === 3) {
@@ -111,13 +135,12 @@ export default function CompleteRegistrationPage() {
         const email = signupEmail;
         const password = signupPassword;
 
-        let profile_picture = null;
-        let profile_picture_path = null;
+  let profile_picture = null;
         let cancelled_photo = null;
         if (logoFile) {
           const uploaded = await uploadFile(logoFile, 'profile');
           profile_picture = uploaded.publicUrl;
-          profile_picture_path = uploaded.path;
+          // Do not store uploaded.path because the DB column is `profile_picture` (public URL).
         }
         if (chequeFile) {
           const uploadedCheque = await uploadFile(chequeFile, 'cheque');
@@ -138,13 +161,24 @@ export default function CompleteRegistrationPage() {
           return [specialization];
         })();
 
+        const normalizeCostObj = (obj: any) => {
+          if (!obj || Object.keys(obj).length === 0) return null;
+          const out: Record<string, number> = {};
+          Object.keys(obj).forEach(k => {
+            const v = obj[k];
+            if (typeof v === 'number' && !isNaN(v)) { out[k] = v; return; }
+            const s = String(v ?? '').replace(/[^0-9]/g, '');
+            if (s !== '') out[k] = Number(s);
+          });
+          return Object.keys(out).length ? out : null;
+        };
+
         const insertObj: any = {
           name: fullName,
           business_name: shopName,
           phone_number: countryCode + (mobile || '').replace(/\D/g, ''),
           email,
           profile_picture,
-          profile_picture_path,
           account_holder_name: accountHolder,
           bank_name: bankName,
           branch_name: branch,
@@ -160,8 +194,8 @@ export default function CompleteRegistrationPage() {
           pincode,
           working_hours: workingHours,
           provide_fabric: form.fabricProvided === true,
-          fabric_cost: form.fabricPrices && Object.keys(form.fabricPrices).length ? form.fabricPrices : null,
-          stitching_cost: form.stitchingCosts && Object.keys(form.stitchingCosts).length ? form.stitchingCosts : null,
+          fabric_cost: normalizeCostObj(form.fabricPrices),
+          stitching_cost: normalizeCostObj(form.stitchingCosts),
           password,
         };
         // Remove id if present in form (defensive)

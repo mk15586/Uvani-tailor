@@ -557,11 +557,14 @@ export function ProfessionalDetailsStep({ data, onChange }: Props) {
                     </div>
                     <div className="w-36">
                       <Input
-                        type="number"
+                        type="text"
                         inputMode="numeric"
-                        min={0}
-                        step={1}
+                        pattern="\d*"
                         value={value}
+                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                          // block + - e E . characters which are allowed in number inputs in some browsers
+                          if (['+', '-', 'e', 'E', '.'].includes(String(e.key))) e.preventDefault();
+                        }}
                         onChange={(e) => {
                           const val = e.target.value.replace(/[^0-9]/g, '');
                           const next = { ...(data.fabricPrices || {}) };
@@ -607,11 +610,13 @@ export function ProfessionalDetailsStep({ data, onChange }: Props) {
                             </div>
                             <div className="w-36">
                               <Input
-                                type="number"
+                                type="text"
                                 inputMode="numeric"
-                                min={0}
-                                step={1}
+                                pattern="\d*"
                                 value={val}
+                                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                                  if (['+', '-', 'e', 'E', '.'].includes(String(e.key))) e.preventDefault();
+                                }}
                                 onChange={(e) => {
                                   const v = e.target.value.replace(/[^0-9]/g, '');
                                   const next = { ...(data.stitchingCosts || {}) };
