@@ -345,7 +345,8 @@ export default function OrdersPage() {
          </div>
        </CardHeader>
        <CardContent>
-         <div className="rounded-md border">
+         {/* Desktop / Tablet: keep the existing table on md+ */}
+         <div className="hidden md:block rounded-md border">
            <Table>
              <TableHeader>
                <TableRow>
@@ -392,6 +393,49 @@ export default function OrdersPage() {
                )}
              </TableBody>
            </Table>
+         </div>
+
+         {/* Mobile: stacked, readable list to avoid table shrink */}
+         <div className="md:hidden space-y-3">
+           {isLoading ? (
+             <div className="text-center h-24 flex items-center justify-center"><Loader2 className="animate-spin inline-block mr-2" /> Loading...</div>
+           ) : paginatedOrders.length > 0 ? (
+             paginatedOrders.map(order => (
+               <div key={order.id} className="border rounded-lg p-3 flex flex-col gap-2 bg-background">
+                 <div className="flex items-start justify-between gap-2">
+                   <div className="flex-1 min-w-0">
+                     <div className="flex items-center justify-between gap-2">
+                       <div className="font-medium truncate">{order.customer}</div>
+                       <div className="text-xs text-muted-foreground">₹{order.amount.toFixed(2)}</div>
+                     </div>
+                     <div className="text-xs text-muted-foreground truncate">{order.id.substring(0,8)}…</div>
+                   </div>
+                 </div>
+                 <div className="flex items-center justify-between gap-2">
+                   <div className="flex items-center gap-2">
+                     <Badge className={`capitalize gap-1 text-xs whitespace-nowrap ${getStatusClasses(order.status)}`}>
+                       {getStatusIcon(order.status)}
+                       {order.status}
+                     </Badge>
+                     <div className="text-xs text-muted-foreground">{order.date ? format(new Date(order.date), 'PP') : '—'}</div>
+                   </div>
+                   <div>
+                     <DropdownMenu>
+                       <DropdownMenuTrigger asChild>
+                         <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                       </DropdownMenuTrigger>
+                       <DropdownMenuContent align="end">
+                         <DropdownMenuItem onClick={() => { setSelectedOrder(order); setIsViewModalOpen(true); }}><Eye className="mr-2 h-4 w-4" /> View Details</DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => { setSelectedOrder(order); setIsDeleteModalOpen(true); }} className="text-red-500 focus:text-red-500"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                       </DropdownMenuContent>
+                     </DropdownMenu>
+                   </div>
+                 </div>
+               </div>
+             ))
+           ) : (
+             <div className="text-center h-24 flex items-center justify-center">No orders found.</div>
+           )}
          </div>
        </CardContent>
        <CardFooter className="flex flex-col gap-4 sm:flex-row justify-between items-center pt-4">
