@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarHeader,
@@ -10,28 +11,22 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { UvaniLogo } from "@/components/icons";
 import {
-  LayoutDashboard,
   Box,
   Wallet,
   Ruler,
-  Wand2,
   LogOut,
   Settings,
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabaseClient";
 
 const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/orders", icon: Box, label: "Orders" },
   { href: "/finance", icon: Wallet, label: "Finance" },
   { href: "/measurements", icon: Ruler, label: "Measurements" },
@@ -39,177 +34,271 @@ const navItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { state, setOpen } = useSidebar();
-  const [activeHover, setActiveHover] = useState<string | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
+  const { state, toggleSidebar } = useSidebar();
+  const isCollapsed = state === "collapsed";
+  const [profileName, setProfileName] = useState<string>("");
+  const [profileEmail, setProfileEmail] = useState<string>("");
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
 
   useEffect(() => {
-    setIsMounted(true);
+    let mounted = true;
+
+    const resolveAvatarUrl = async (path: string | null) => {
+      if (!path) return null;
+      if (path.startsWith("http")) return path;
+      try {
+        const { data } = supabase.storage.from("Images").getPublicUrl(path);
+        return data?.publicUrl ?? path;
+      } catch (e) {
+        return path;
+      }
+    };
+
+    const loadProfile = async () => {
+      try {
+        let email: string | null = null;
+        try {
+          const { data } = await supabase.auth.getUser();
+          email = data?.user?.email ?? null;
+        } catch (e) {
+          email = null;
+        }
+        if (!email && typeof window !== "undefined") {
+          email = window.localStorage.getItem("uvani_signup_email");
+        }
+        if (!email) return;
+
+        const { data, error } = await supabase
+          .from("tailors")
+          .select("name, profile_picture, avatar")
+          .eq("email", email)
+          .maybeSingle();
+
+        if (!mounted) return;
+
+        if (error || !data) {
+          setProfileName("");
+          setProfileEmail(email);
+          setProfileAvatar(null);
+          return;
+        }
+
+        setProfileName(data.name ?? "");
+        setProfileEmail(email);
+        const avatarUrl = await resolveAvatarUrl(data.profile_picture || data.avatar || null);
+        if (mounted) {
+          setProfileAvatar(avatarUrl);
+        }
+      } catch (e) {
+        if (mounted) {
+          setProfileName("");
+          setProfileAvatar(null);
+        }
+      }
+    };
+
+    loadProfile();
+
+    const onProfileUpdated = () => {
+      loadProfile();
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("uvani:profile-updated", onProfileUpdated as EventListener);
+    }
+
+    return () => {
+      mounted = false;
+      if (typeof window !== "undefined") {
+        window.removeEventListener("uvani:profile-updated", onProfileUpdated as EventListener);
+      }
+    };
   }, []);
+
+  const fallbackInitials = profileName
+    ? profileName
+        .split(" ")
+        .map((part) => part.charAt(0))
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : profileEmail
+    ? profileEmail.charAt(0).toUpperCase()
+    : "U";
 
   return (
     <>
       <Sidebar
         variant="sidebar"
         collapsible="icon"
-        className="hidden md:flex fixed h-full z-50 border-r border-sidebar-border/50 bg-[#1A1126] transition-all duration-500 ease-in-out shadow-xl"
+        className="z-[60] border-r border-sidebar-border/60 bg-[#0c0d16] transition-all duration-300 ease-in-out md:sticky md:top-0 md:h-screen"
       >
-      <div className="flex flex-col justify-between h-full">
-        <div>
-          <div className="relative">
-            <SidebarTrigger
-              className={cn(
-                "group rounded-full p-1.5 hover:bg-white/10 transition-all duration-300 absolute z-10",
-                state === "collapsed"
-                  ? "top-6 left-1/2 -translate-x-1/2"
-                  : "top-9 right-3"
-              )}
-            >
-              {state === "collapsed" ? (
-                <ChevronRight className="h-4 w-4 text-white/70 group-hover:text-white transition-colors duration-300" />
-              ) : (
-                <ChevronLeft className="h-4 w-4 text-white/70 group-hover:text-white transition-colors duration-300" />
-              )}
-            </SidebarTrigger>
-            <SidebarHeader
-              className={cn("h-24 flex items-center justify-center p-4")}
-            >
-              <div
-                className={cn(
-                  "relative flex items-center justify-center transition-opacity duration-300 w-full",
-                  state === "collapsed" ? "opacity-0" : "opacity-100"
-                )}
-              >
-                <img
-                  src="/UVANI logo.png"
-                  alt="Uvani Logo"
-                  className="h-14 w-auto sm:h-16 md:h-20 object-contain z-10 drop-shadow-lg"
-                  draggable={false}
-                />
-              </div>
-            </SidebarHeader>
-          </div>
-          <SidebarContent className="flex-1 p-3">
-            <SidebarMenu>
-              {navItems.map((item) => {
-                const isActive = pathname.startsWith(item.href);
-                return (
-                  <SidebarMenuItem key={item.href} className="relative my-1">
-                    {isActive && (
-                      <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-blue-400 to-purple-500 rounded-r-full" />
-                    )}
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={{
-                        children: item.label,
-                        className:
-                          "font-sans bg-gray-900 text-white py-1.5 px-3",
-                      }}
-                      className={cn(
-                        "justify-start gap-3 rounded-xl transition-all duration-300 overflow-hidden group",
-                        isActive
-                          ? "bg-gradient-to-r from-blue-500/15 to-purple-500/15 text-white shadow-md"
-                          : "text-white/80 hover:text-white hover:bg-white/10"
-                      )}
-                      onMouseEnter={() => setActiveHover(item.href)}
-                      onMouseLeave={() => setActiveHover(null)}
-                    >
-                      <Link href={item.href}>
-                        <div className="relative">
-                          <div
-                            className={cn(
-                              "absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full scale-0 transition-transform duration-300",
-                              activeHover === item.href || isActive
-                                ? "scale-100"
-                                : "scale-0"
-                            )}
-                          />
-                          <item.icon className="h-5 w-5 relative z-10 transition-transform duration-300 group-hover:scale-110" />
-                        </div>
-                        <span className="transition-all duration-300 whitespace-nowrap">
-                          {item.label}
-                        </span>
-                        <div
-                          className={cn(
-                            "ml-auto transform transition-transform duration-300",
-                            state === "collapsed"
-                              ? "translate-x-8 opacity-0"
-                              : "translate-x-0 opacity-100"
-                          )}
-                        >
-                          <ChevronRight
-                            className={cn(
-                              "h-4 w-4 transition-all duration-300",
-                              isActive
-                                ? "opacity-100"
-                                : "opacity-0 group-hover:opacity-50"
-                            )}
-                          />
-                        </div>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarContent>
-        </div>
-        <SidebarFooter className="p-3 border-t border-white/10 pt-3">
-          <SidebarMenu>
-            <SidebarMenuItem className="my-1">
-              <SidebarMenuButton
-                asChild
-                tooltip={{
-                  children: "Settings",
-                  className: "font-sans bg-gray-900 text-white py-1.5 px-3",
-                }}
-                className="justify-start gap-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all duration-300 group"
-              >
-                <Link href="/settings">
-                  <Settings className="h-5 w-5 transition-transform duration-300 group-hover:rotate-45" />
-                  <span>Settings</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem className="my-1">
-              <SidebarMenuButton
-                asChild
-                tooltip={{
-                  children: "Logout",
-                  className: "font-sans bg-gray-900 text-white py-1.5 px-3",
-                }}
-                className="justify-start gap-3 rounded-xl text-white/80 hover:text-white hover:bg-rose-500/20 transition-all duration-300 group"
-              >
-                <Link href="/signin">
-                  <LogOut className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
-                  <span>Logout</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-
-          {/* User Profile Section */}
+      <div className="flex h-full w-full flex-col bg-[#0c0d16]">
+        <div
+          className={cn(
+            "relative flex h-24 items-center justify-between border-b border-white/5 px-4",
+            isCollapsed && "px-2"
+          )}
+        >
           <div
             className={cn(
-              "flex items-center gap-3 p-3 mt-4 rounded-xl bg-white/5 transition-all duration-500 overflow-hidden",
-              state === "collapsed" ? "justify-center" : "justify-start"
+              "flex items-center gap-3",
+              isCollapsed && "gap-2"
             )}
           >
-            <Avatar className="h-9 w-9 border-2 border-white/20">
-              <AvatarImage src="/avatar.png" />
-              <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-500 text-white">
-                UN
-              </AvatarFallback>
-            </Avatar>
             <div
               className={cn(
-                "transition-all duration-500 overflow-hidden",
-                state === "collapsed" ? "opacity-0 w-0" : "opacity-100 w-auto"
+                "flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 transition-transform duration-200",
+                isCollapsed ? "scale-90" : "scale-100"
               )}
             >
-              <p className="text-sm font-medium text-white">User Name</p>
-              <p className="text-xs text-white/60">admin@uvani.com</p>
+              <img
+                src="/UVANI logo.png"
+                alt="Uvani logo"
+                className="h-8 w-auto"
+                draggable={false}
+                loading="lazy"
+              />
+            </div>
+            <div
+              className={cn(
+                "leading-tight text-white transition-all duration-200",
+                isCollapsed ? "pointer-events-none opacity-0 -translate-x-3" : "opacity-100 translate-x-0"
+              )}
+            >
+              <p className="text-xs uppercase tracking-[0.25em] text-white/60">Uvani</p>
+              <p className="text-lg font-semibold">Tailor Suite</p>
+            </div>
+          </div>
+          <button
+            onClick={toggleSidebar}
+            className={cn(
+              "flex items-center justify-center rounded-full border border-white/12 text-white transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
+              isCollapsed
+                ? "absolute top-1/2 h-10 w-10 -translate-y-1/2 bg-[#11121e] shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
+                : "ml-3 h-9 w-9 bg-transparent text-white/70 hover:bg-white/10 hover:text-white"
+            )}
+            style={isCollapsed ? { right: "-18px" } : undefined}
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+
+        <SidebarContent className="flex-1 px-3 py-5">
+          <SidebarMenu className="space-y-1.5">
+            {navItems.map((item) => {
+              const isActive = pathname.startsWith(item.href);
+              return (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive}
+                    tooltip={isCollapsed ? {
+                      children: item.label,
+                      className: "font-sans bg-gray-900 text-white py-1.5 px-3",
+                    } : undefined}
+                    className={cn(
+                      "group relative rounded-2xl border border-transparent px-3 py-2.5 text-sm font-medium text-white/70 transition-all duration-200",
+                      isActive
+                        ? "border-white/15 bg-white/5 text-white"
+                        : "hover:border-white/10 hover:bg-white/5 hover:text-white"
+                    )}
+                  >
+                    <Link href={item.href} className="flex items-center gap-3">
+                      <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-white/60 transition-all duration-200 group-hover:text-white">
+                        {isActive && (
+                          <span className="absolute inset-0 rounded-xl border border-white/20" />
+                        )}
+                        <item.icon className="h-4.5 w-4.5" />
+                      </div>
+                      {!isCollapsed && (
+                        <div className="flex flex-1 items-center justify-between">
+                          <span className="leading-none">{item.label}</span>
+                          <ChevronRight
+                            className={cn(
+                              "h-4 w-4 text-white/20 transition-opacity duration-200",
+                              isActive ? "opacity-70" : "opacity-0 group-hover:opacity-40"
+                            )}
+                          />
+                        </div>
+                      )}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarContent>
+
+        <SidebarFooter className="border-t border-white/5 px-3 py-5">
+          <div className="space-y-3">
+            <div
+              className={cn(
+                "flex items-center gap-2",
+                isCollapsed && "flex-col gap-3"
+              )}
+            >
+              <SidebarMenuButton
+                asChild
+                tooltip={isCollapsed ? {
+                  children: "Settings",
+                  className: "font-sans bg-gray-900 text-white py-1.5 px-3",
+                } : undefined}
+                className={cn(
+                  "rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white/70 transition-colors duration-200 hover:border-white/20 hover:bg-white/10 hover:text-white",
+                  isCollapsed ? "justify-center" : "flex-[1.1]"
+                )}
+              >
+                <Link href="/settings" className="flex items-center justify-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  {!isCollapsed && <span>Settings</span>}
+                </Link>
+              </SidebarMenuButton>
+              <SidebarMenuButton
+                asChild
+                tooltip={isCollapsed ? {
+                  children: "Logout",
+                  className: "font-sans bg-gray-900 text-white py-1.5 px-3",
+                } : undefined}
+                className={cn(
+                  "rounded-2xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-rose-100 transition-colors duration-200 hover:border-rose-500/40 hover:bg-rose-500/15",
+                  isCollapsed ? "justify-center" : "flex-1"
+                )}
+              >
+                <Link href="/signin" className="flex items-center justify-center gap-2">
+                  <LogOut className="h-4 w-4" />
+                  {!isCollapsed && <span>Logout</span>}
+                </Link>
+              </SidebarMenuButton>
+            </div>
+
+            <div
+              className={cn(
+                "flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-3",
+                isCollapsed ? "justify-center" : ""
+              )}
+            >
+              <Avatar className="h-10 w-10 border border-white/15">
+                {profileAvatar && <AvatarImage src={profileAvatar} />}
+                <AvatarFallback className="bg-slate-700 text-xs font-semibold text-white">
+                  {fallbackInitials}
+                </AvatarFallback>
+              </Avatar>
+              {!isCollapsed && (
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white">
+                    {profileName || "User"}
+                  </p>
+                  <p className="truncate text-xs text-white/60">
+                    {profileEmail || ""}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </SidebarFooter>

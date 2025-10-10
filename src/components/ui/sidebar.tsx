@@ -25,7 +25,7 @@ const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH_MD = "220px"
 const SIDEBAR_WIDTH_LG = "280px"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
-const SIDEBAR_WIDTH_ICON = "3rem"
+const SIDEBAR_WIDTH_ICON = "80px"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
 type SidebarContext = {
@@ -205,7 +205,7 @@ const Sidebar = React.forwardRef<
         ref={ref}
         className={cn(
             "hidden md:block bg-sidebar text-sidebar-foreground border-r", 
-            state === 'collapsed' ? 'md:w-[52px]' : 'md:w-[220px] lg:w-[280px]',
+            state === 'collapsed' ? 'md:w-[80px]' : 'md:w-[220px] lg:w-[280px]',
             "transition-all duration-300 ease-in-out",
             className
         )}

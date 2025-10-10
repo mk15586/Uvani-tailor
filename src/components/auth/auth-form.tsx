@@ -17,8 +17,8 @@ export function AuthForm() {
       // Redirect to the complete registration page after sign up
       router.push("/complete-registration");
     } else {
-      // Redirect to the dashboard after sign in
-      router.push("/dashboard");
+      // Redirect to the orders overview after sign in
+      router.push("/orders");
     }
   };
 

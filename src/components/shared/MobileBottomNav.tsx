@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Box, Wallet, Ruler, Settings } from "lucide-react";
+import { Box, Wallet, Ruler, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/orders", icon: Box, label: "Orders" },
   { href: "/finance", icon: Wallet, label: "Finance" },
   { href: "/measurements", icon: Ruler, label: "Measurements" },

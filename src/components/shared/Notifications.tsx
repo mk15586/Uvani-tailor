@@ -89,38 +89,75 @@ export default function Notifications() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full relative overflow-visible">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/70 bg-white text-slate-700 shadow-[0_12px_28px_rgba(15,23,42,0.18)] transition-transform hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-gradient-to-br hover:from-violet-500/80 hover:via-fuchsia-500/80 hover:to-amber-400/80 hover:text-white dark:border-white/15 dark:bg-gradient-to-br dark:from-[#0b0d1d] dark:via-[#0b0f24] dark:to-[#090b18] dark:text-white"
+        >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute top-0 right-0 translate-x-1/4 -translate-y-1/4 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
-              {unreadCount}
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-amber-500 px-1 text-[10px] font-semibold text-white shadow-lg">
+              {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" forceMount className="w-[320px]">
-        <div className="flex items-center justify-between px-3 py-2">
-          <div className="text-sm font-medium">Notifications</div>
-          <div className="flex items-center gap-2">
-            <button className="text-xs text-muted-foreground" onClick={() => fetchNotifications()}>Refresh</button>
-            <button className="text-xs text-primary" onClick={() => markAllRead()}>Mark all read</button>
+      <DropdownMenuContent
+        align="end"
+        forceMount
+        className="w-[320px] overflow-hidden rounded-3xl border border-slate-200/50 bg-white/95 p-0 shadow-[0_28px_60px_rgba(15,23,42,0.25)] backdrop-blur-xl dark:border-white/10 dark:bg-gradient-to-b dark:from-slate-900/95 dark:via-slate-900/92 dark:to-slate-950/95"
+      >
+        <div className="flex items-center justify-between border-b border-slate-200/60 bg-white/80 px-5 py-4 backdrop-blur dark:border-white/10 dark:bg-white/5">
+          <div>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</p>
+            <p className="text-xs text-slate-500 dark:text-slate-300">Stay updated with the latest activity</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <button
+              className="rounded-full border border-slate-200 px-3 py-1 text-slate-600 transition-colors hover:bg-white hover:text-slate-900 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+              onClick={() => fetchNotifications()}
+            >
+              Refresh
+            </button>
+            <button
+              className="rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-amber-400 px-3 py-1 font-semibold text-white shadow-sm transition-transform hover:-translate-y-px"
+              onClick={() => markAllRead()}
+            >
+              Mark all
+            </button>
           </div>
         </div>
-        <div className="max-h-64 overflow-y-auto">
+        <div className="max-h-64 overflow-y-auto bg-gradient-to-b from-white/92 via-white to-white/95 text-slate-700 dark:from-slate-900/80 dark:via-slate-900/90 dark:to-slate-950/95 dark:text-slate-200">
           {notifications.length === 0 && (
-            <div className="p-3 text-sm text-muted-foreground">No notifications</div>
+            <div className="flex flex-col items-center justify-center gap-2 px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-300">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-dashed border-slate-300 text-slate-400 dark:border-white/20 dark:text-white/30">
+                <Bell className="h-5 w-5" />
+              </span>
+              You're all caught up!
+            </div>
           )}
           {notifications.map((n: any) => (
-            <div key={n.id} className={`px-3 py-2 border-t hover:bg-muted/20 flex items-start justify-between ${n.read ? 'opacity-60' : ''}`}>
-              <div className="min-w-0">
-                <div className="text-sm font-medium truncate">{n.content}</div>
-                <div className="text-xs text-muted-foreground">{n.time ? new Date(n.time).toLocaleString() : ''}</div>
+            <div
+              key={n.id}
+              className={`group flex items-start gap-3 px-5 py-4 transition-colors ${n.read ? 'opacity-60 dark:opacity-70' : 'bg-white/70 dark:bg-white/10'}`}
+            >
+              <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-600/80 to-fuchsia-500/80 text-white shadow-md">
+                <Bell className="h-4 w-4" />
               </div>
-              <div className="ml-3 flex flex-col items-end gap-2">
-                {!n.read && (
-                  <button className="text-xs text-primary" onClick={() => markNotificationRead(n.id)}>Mark</button>
-                )}
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-slate-800 dark:text-white line-clamp-2">{n.content}</p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">
+                  {n.time ? new Date(n.time).toLocaleString() : ''}
+                </p>
               </div>
+              {!n.read && (
+                <button
+                  className="rounded-full border border-transparent px-3 py-1 text-xs font-medium text-violet-600 transition-colors hover:border-violet-200 hover:bg-violet-50 group-hover:translate-y-[-2px] dark:text-violet-300 dark:hover:border-violet-400/40 dark:hover:bg-violet-500/10"
+                  onClick={() => markNotificationRead(n.id)}
+                >
+                  Mark
+                </button>
+              )}
             </div>
           ))}
         </div>

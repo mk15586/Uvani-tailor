@@ -738,8 +738,8 @@ export default function FinancePage() {
                 <span className="ml-2">{notified ? '✔ Notified' : 'Notify Me When Ready'}</span>
               </Button>
 
-              <Button variant="ghost" className="w-full" size="sm" onClick={() => router.push('/dashboard')}>
-                Return to Dashboard
+              <Button variant="ghost" className="w-full" size="sm" onClick={() => router.push('/orders')}>
+                Return to Orders
               </Button>
             </CardFooter>
           </Card>

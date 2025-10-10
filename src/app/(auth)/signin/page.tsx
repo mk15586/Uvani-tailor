@@ -144,7 +144,7 @@ export default function SignInPage() {
     }
     setTimeout(() => {
       setLoading(false);
-      router.push("/dashboard");
+      router.push("/orders");
     }, 1200);
   };
 
@@ -406,7 +406,7 @@ export default function SignInPage() {
 
                   {otpVerified && (
                     <>
-                      <Button variant="ghost" onClick={() => { setShowForgot(false); router.push('/dashboard'); }}>Skip and continue</Button>
+                      <Button variant="ghost" onClick={() => { setShowForgot(false); router.push('/orders'); }}>Skip and continue</Button>
                       <Button onClick={async () => {
                         if (!newPassword) return toast.error('Please enter a new password');
                         if (newPassword !== confirmPassword) return toast.error('Passwords do not match');
@@ -415,7 +415,7 @@ export default function SignInPage() {
                           const { error } = await supabase.from('tailors').update({ password: newPassword }).eq('email', forgotEmail);
                           if (error) { toast.error(error.message || 'Failed to reset password'); setResetting(false); return; }
                           toast.success('Password changed. Redirecting...');
-                          setTimeout(() => router.push('/dashboard'), 900);
+                          setTimeout(() => router.push('/orders'), 900);
                         } catch (err) { console.error(err); toast.error('Failed to reset password'); } finally { setResetting(false); }
                       }}>{resetting ? 'Saving...' : 'Change Password'}</Button>
                     </>

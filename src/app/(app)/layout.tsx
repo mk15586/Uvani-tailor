@@ -1,7 +1,7 @@
 "use client";
 
 import { AppSidebar } from "@/components/shared/sidebar";
-import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppHeader } from "@/components/shared/header";
 import MobileBottomNav from "@/components/shared/MobileBottomNav";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,6 @@ import { useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
-  const { state } = useSidebar();
   const pathname = usePathname();
 
   // Apply user's dark mode preference globally for all pages
@@ -82,11 +81,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         <AppSidebar />
         <main
           className={cn(
-            "flex-1 flex flex-col transition-all duration-500 ease-in-out",
-            // apply left margin only on md+ so mobile uses full width
-            state === "expanded"
-              ? "md:ml-[220px] lg:ml-[280px]"
-              : "md:ml-[68px]"
+            "flex-1 flex flex-col transition-all duration-300 ease-in-out"
           )}
         >
           <AppHeader />
