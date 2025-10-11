@@ -6,19 +6,55 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search, ChevronDown, X, Check, Clock, MapPin, Briefcase, Navigation, Loader2 } from "lucide-react";
 
-const SPECIALIZATION_OPTIONS = [
+type MultiSelectOption = { value: string; label: string };
+type CustomGarmentsMap = Record<string, string[]>;
+
+const addUniqueCaseInsensitive = (list: string[], value: string) => {
+  const lower = value.toLowerCase();
+  return [...list.filter((item) => item.toLowerCase() !== lower), value];
+};
+
+const removeCaseInsensitive = (list: string[], value: string) => {
+  const lower = value.toLowerCase();
+  return list.filter((item) => item.toLowerCase() !== lower);
+};
+
+const includesCaseInsensitive = (list: string[], value: string) => {
+  const lower = value.toLowerCase();
+  return list.some((item) => item.toLowerCase() === lower);
+};
+
+const normalizeCategoryMap = (input: any, categories: string[]): CustomGarmentsMap => {
+  const map: CustomGarmentsMap = {};
+  if (input && typeof input === 'object') {
+    Object.keys(input).forEach((key) => {
+      const value = input[key];
+      if (Array.isArray(value)) {
+        map[key] = value;
+      }
+    });
+  }
+  categories.forEach((category) => {
+    if (!Array.isArray(map[category])) {
+      map[category] = [];
+    }
+  });
+  return map;
+};
+
+const SPECIALIZATION_OPTIONS: MultiSelectOption[] = [
   { value: 'men', label: "Men's Wear" },
   { value: 'women', label: "Women's Wear" },
   
 ];
 
-const SKILLS_SUGGESTIONS = [
+const SKILLS_SUGGESTIONS: string[] = [
   "Stitching", "Embroidery", "Pattern Making", "Alterations", 
   "Custom Fitting", "Hand Stitching", "Machine Stitching", 
   "Fabric Selection", "Design Consultation",
 ];
 
-const FABRICS_LIST = [
+const FABRICS_LIST: string[] = [
   "Cotton",
   "Linen",
   "Silk",
@@ -47,7 +83,7 @@ const FABRICS_LIST = [
   "Rayon Chicken",
 ];
 
-const GARMENTS_BY_CATEGORY = {
+const GARMENTS_BY_CATEGORY: Record<string, string[]> = {
   men: [
     'Pant','Shirt','Kurta','Paijama','Blazer','Coat (Set)','Vastcoat','Bandi','Paithani Suit','Sherwani','Shirt + Pant Set','Kurta + Paijama (Set)','Coat + Pant (Set)','Coat + Vastcoat + Pant','Blazer + Pant (Set)','Sherwani + Paijama (Set)'
   ],
@@ -72,14 +108,24 @@ interface Props {
 }
 
 // Multi-Select Dropdown
-function MultiSelectDropdown({ options, selectedValues, onChange, placeholder }) {
+function MultiSelectDropdown({
+  options,
+  selectedValues,
+  onChange,
+  placeholder,
+}: {
+  options: MultiSelectOption[];
+  selectedValues: string[];
+  onChange: (values: string[]) => void;
+  placeholder: string;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && e.target instanceof Node && !dropdownRef.current.contains(e.target)) {
         setIsOpen(false);
         setSearchTerm("");
       }
@@ -88,15 +134,16 @@ function MultiSelectDropdown({ options, selectedValues, onChange, placeholder })
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const toggleOption = (value) => {
+  const toggleOption = (value: string) => {
     onChange(selectedValues.includes(value) 
       ? selectedValues.filter(v => v !== value) 
       : [...selectedValues, value]
     );
   };
 
-  const removeOption = (value, e) => {
+  const removeOption = (value: string | undefined, e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
+    if (!value) return;
     onChange(selectedValues.filter(v => v !== value));
   };
 
@@ -163,18 +210,18 @@ function MultiSelectDropdown({ options, selectedValues, onChange, placeholder })
 }
 
 // Skills Input
-function SkillsInput({ value, onChange }) {
+function SkillsInput({ value, onChange }: { value?: string; onChange: (val: string) => void }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const currentSkills = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
 
-  const addSkill = (skill) => {
+  const addSkill = (skill: string) => {
     if (!currentSkills.includes(skill)) {
       onChange([...currentSkills, skill].join(', '));
     }
     setShowSuggestions(false);
   };
 
-  const removeSkill = (skill) => onChange(currentSkills.filter(s => s !== skill).join(', '));
+  const removeSkill = (skill: string) => onChange(currentSkills.filter((s) => s !== skill).join(', '));
   const availableSuggestions = SKILLS_SUGGESTIONS.filter(s => !currentSkills.includes(s));
 
   return (
@@ -214,7 +261,14 @@ function SkillsInput({ value, onChange }) {
 }
 
 // Location Picker
-function LocationPicker({ address, pincode, onAddressChange, onPincodeChange }) {
+interface LocationPickerProps {
+  address?: string;
+  pincode?: string;
+  onAddressChange: (value: string) => void;
+  onPincodeChange: (value: string) => void;
+}
+
+function LocationPicker({ address, pincode, onAddressChange, onPincodeChange }: LocationPickerProps) {
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
 
@@ -237,7 +291,7 @@ function LocationPicker({ address, pincode, onAddressChange, onPincodeChange }) 
           );
           if (!response.ok) throw new Error("Failed to fetch address");
           
-          const data = await response.json();
+          const data: any = await response.json();
           console.log("Geocoding API Response:", data);
 
           const addressParts = [data.locality, data.city, data.principalSubdivision, data.countryName].filter(Boolean);
@@ -279,7 +333,7 @@ function LocationPicker({ address, pincode, onAddressChange, onPincodeChange }) 
         }
       },
       (error) => {
-        const messages = {
+        const messages: Record<number, string> = {
           [error.PERMISSION_DENIED]: "Location access denied. Please enable location permissions.",
           [error.POSITION_UNAVAILABLE]: "Location information unavailable.",
           [error.TIMEOUT]: "Location request timed out.",
@@ -291,8 +345,8 @@ function LocationPicker({ address, pincode, onAddressChange, onPincodeChange }) 
     );
   };
 
-  const AlertMessage = ({ type, children }) => {
-    const styles = {
+  const AlertMessage = ({ type, children }: { type: 'error' | 'warning' | 'success'; children: React.ReactNode }) => {
+    const styles: Record<'error' | 'warning' | 'success', string> = {
       error: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200",
       warning: "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200",
       success: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200"
@@ -363,8 +417,16 @@ function LocationPicker({ address, pincode, onAddressChange, onPincodeChange }) 
 }
 
 // Availability Selector
-function AvailabilitySelector({ value, onChange }) {
-  const parseAvailability = (val) => {
+type WorkingSchedule = {
+  days: string[];
+  startTime: string;
+  endTime: string;
+  is24Hours: boolean;
+  isClosed: boolean;
+};
+
+function AvailabilitySelector({ value, onChange }: { value?: WorkingSchedule; onChange: (schedule: WorkingSchedule) => void }) {
+  const parseAvailability = (val: WorkingSchedule | string | undefined): WorkingSchedule => {
     if (!val || typeof val === 'string') {
       return { days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'], startTime: '09:00', endTime: '18:00', is24Hours: false, isClosed: false };
     }
@@ -372,20 +434,20 @@ function AvailabilitySelector({ value, onChange }) {
   };
 
   const availability = parseAvailability(value);
-  const [selectedDays, setSelectedDays] = useState(availability.days || []);
-  const [startTime, setStartTime] = useState(availability.startTime || '09:00');
-  const [endTime, setEndTime] = useState(availability.endTime || '18:00');
-  const [is24Hours, setIs24Hours] = useState(availability.is24Hours || false);
-  const [isClosed, setIsClosed] = useState(availability.isClosed || false);
+  const [selectedDays, setSelectedDays] = useState<string[]>(availability.days || []);
+  const [startTime, setStartTime] = useState<string>(availability.startTime || '09:00');
+  const [endTime, setEndTime] = useState<string>(availability.endTime || '18:00');
+  const [is24Hours, setIs24Hours] = useState<boolean>(availability.is24Hours || false);
+  const [isClosed, setIsClosed] = useState<boolean>(availability.isClosed || false);
 
   useEffect(() => {
     onChange({ days: selectedDays, startTime, endTime, is24Hours, isClosed });
   }, [selectedDays, startTime, endTime, is24Hours, isClosed]);
 
-  const toggleDay = (day) => setSelectedDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
+  const toggleDay = (day: string) => setSelectedDays((prev: string[]) => prev.includes(day) ? prev.filter((d: string) => d !== day) : [...prev, day]);
 
-  const setPreset = (preset) => {
-    const presets = {
+  const setPreset = (preset: 'weekdays' | 'weekend' | 'alldays') => {
+    const presets: Record<'weekdays' | 'weekend' | 'alldays', string[]> = {
       weekdays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
       weekend: ['saturday', 'sunday'],
       alldays: DAYS_OF_WEEK.map(d => d.value)
@@ -394,7 +456,7 @@ function AvailabilitySelector({ value, onChange }) {
   };
 
   const generateTimeOptions = () => {
-    const options = [];
+    const options: { value: string; label: string }[] = [];
     for (let h = 0; h < 24; h++) {
       for (let m = 0; m < 60; m += 30) {
         const time24 = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
@@ -411,7 +473,7 @@ function AvailabilitySelector({ value, onChange }) {
   const formatSelectedSchedule = () => {
     if (isClosed) return "Currently Closed";
     if (selectedDays.length === 0) return "No days selected";
-    const dayLabels = DAYS_OF_WEEK.filter(d => selectedDays.includes(d.value)).map(d => d.label).join(', ');
+  const dayLabels = DAYS_OF_WEEK.filter(d => selectedDays.includes(d.value)).map(d => d.label).join(', ');
     if (is24Hours) return `${dayLabels}: Open 24 Hours`;
     const start = timeOptions.find(t => t.value === startTime)?.label || startTime;
     const end = timeOptions.find(t => t.value === endTime)?.label || endTime;
@@ -423,7 +485,7 @@ function AvailabilitySelector({ value, onChange }) {
       <div className="space-y-2">
         <Label className="text-sm font-medium">Quick Presets</Label>
         <div className="flex flex-col sm:flex-row flex-wrap gap-2">
-          {['weekdays', 'weekend', 'alldays'].map(preset => (
+          {(['weekdays', 'weekend', 'alldays'] as const).map(preset => (
             <button key={preset} type="button" onClick={() => setPreset(preset)} className="w-full sm:w-auto px-4 py-2.5 sm:py-2 text-sm bg-white dark:bg-gray-700 border rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-400 transition-colors active:scale-95">
               {preset === 'weekdays' ? 'Weekdays (Mon-Fri)' : preset === 'weekend' ? 'Weekend (Sat-Sun)' : 'All Days'}
             </button>
@@ -473,6 +535,191 @@ function AvailabilitySelector({ value, onChange }) {
 }
 
 export function ProfessionalDetailsStep({ data, onChange }: Props) {
+  const [newFabricName, setNewFabricName] = useState<string>("");
+  const [newFabricPrice, setNewFabricPrice] = useState<string>("");
+  const specializationArray = Array.isArray(data.specialization) ? data.specialization : (data.specialization ? [data.specialization] : []);
+  const initialCategory = specializationArray[0] || 'men';
+  const [newGarmentCategory, setNewGarmentCategory] = useState<string>(initialCategory);
+  const [newGarmentName, setNewGarmentName] = useState<string>("");
+  const [newGarmentPrice, setNewGarmentPrice] = useState<string>("");
+
+  const specializationKey = specializationArray.join("|");
+  useEffect(() => {
+    if (!specializationArray.length) return;
+    if (!specializationArray.includes(newGarmentCategory)) {
+      setNewGarmentCategory(specializationArray[0]);
+    }
+  }, [specializationKey, newGarmentCategory, specializationArray]);
+
+  const fallbackCategories = specializationArray.length ? specializationArray : Object.keys(GARMENTS_BY_CATEGORY);
+  const customFabricNames: string[] = Array.isArray(data.customFabricNames) ? data.customFabricNames : [];
+  const removedFabrics: string[] = Array.isArray(data.removedFabrics) ? data.removedFabrics : [];
+  const fabricPrices = data.fabricPrices || {};
+  const allFabricNames = Array.from(new Set([
+    ...FABRICS_LIST,
+    ...customFabricNames,
+    ...Object.keys(fabricPrices),
+  ])).filter((name) => name && typeof name === 'string');
+  const visibleFabricEntries = allFabricNames.filter((name) => !includesCaseInsensitive(removedFabrics, name));
+
+  const stitchingCosts = data.stitchingCosts || {};
+  const customGarments = normalizeCategoryMap(data.customGarments, fallbackCategories);
+  const removedGarments = normalizeCategoryMap(data.removedGarments, fallbackCategories);
+
+  const handleAddFabric = () => {
+    const name = newFabricName.trim();
+    const price = newFabricPrice.replace(/[^0-9]/g, "").trim();
+    if (!name || !price) return;
+
+    const numericPrice = Number(price);
+    if (Number.isNaN(numericPrice)) return;
+
+    const nameLower = name.toLowerCase();
+    const updatedPrices = { ...fabricPrices, [name]: numericPrice };
+
+    let updatedCustom = customFabricNames;
+    const isDefault = FABRICS_LIST.some((f) => f.toLowerCase() === nameLower);
+    if (!isDefault && !includesCaseInsensitive(customFabricNames, name)) {
+      updatedCustom = [...customFabricNames, name];
+    }
+
+    const updatedRemoved = removeCaseInsensitive(removedFabrics, name);
+
+    const patch: any = { fabricPrices: updatedPrices };
+    if (updatedCustom !== customFabricNames) patch.customFabricNames = updatedCustom;
+    if (updatedRemoved.length !== removedFabrics.length) patch.removedFabrics = updatedRemoved;
+    onChange(patch);
+    setNewFabricName("");
+    setNewFabricPrice("");
+  };
+
+  const handleRemoveFabric = (name: string) => {
+    const updatedPrices = { ...fabricPrices };
+    delete updatedPrices[name];
+
+    const isDefault = FABRICS_LIST.some((f) => f.toLowerCase() === name.toLowerCase());
+    const updatedCustom = isDefault ? customFabricNames : removeCaseInsensitive(customFabricNames, name);
+    const updatedRemoved = addUniqueCaseInsensitive(removedFabrics, name);
+
+    const patch: any = { fabricPrices: updatedPrices };
+    if (updatedCustom !== customFabricNames) patch.customFabricNames = updatedCustom;
+    if (updatedRemoved.length !== removedFabrics.length) patch.removedFabrics = updatedRemoved;
+    onChange(patch);
+  };
+
+  const handleRestoreFabric = (name: string) => {
+    const updatedRemoved = removeCaseInsensitive(removedFabrics, name);
+    const isDefault = FABRICS_LIST.some((f) => f.toLowerCase() === name.toLowerCase());
+
+    const patch: any = {};
+    if (updatedRemoved.length !== removedFabrics.length) {
+      patch.removedFabrics = updatedRemoved;
+    }
+    if (!isDefault && !includesCaseInsensitive(customFabricNames, name)) {
+      patch.customFabricNames = [...customFabricNames, name];
+    }
+    if (Object.keys(patch).length) {
+      onChange(patch);
+    }
+  };
+
+  const handleAddGarment = () => {
+    const category = newGarmentCategory;
+    const name = newGarmentName.trim();
+    const price = newGarmentPrice.replace(/[^0-9]/g, "").trim();
+    if (!name || !price) return;
+    if (!specializationArray.includes(category)) return;
+
+    const numericPrice = Number(price);
+    if (Number.isNaN(numericPrice)) return;
+
+    const updatedCosts: Record<string, number> = { ...stitchingCosts, [name]: numericPrice };
+    const currentCustomList = Array.isArray(customGarments[category]) ? customGarments[category] : [];
+    const nameLower = name.toLowerCase();
+    const isDefault = (GARMENTS_BY_CATEGORY as any)[category]?.some((g: string) => g.toLowerCase() === nameLower);
+    const alreadyCustom = includesCaseInsensitive(currentCustomList, name);
+
+    let updatedCustomGarments = customGarments;
+    if (!isDefault && !alreadyCustom) {
+      updatedCustomGarments = {
+        ...customGarments,
+        [category]: [...currentCustomList, name],
+      };
+    }
+
+    const currentRemoved = Array.isArray(removedGarments[category]) ? removedGarments[category] : [];
+    const updatedRemoved = removeCaseInsensitive(currentRemoved, name);
+
+    const patch: any = { stitchingCosts: updatedCosts };
+    if (updatedCustomGarments !== customGarments) patch.customGarments = updatedCustomGarments;
+    if (updatedRemoved.length !== currentRemoved.length) {
+      patch.removedGarments = {
+        ...removedGarments,
+        [category]: updatedRemoved,
+      };
+    }
+    onChange(patch);
+    setNewGarmentName("");
+    setNewGarmentPrice("");
+  };
+
+  const handleRemoveGarment = (category: string, name: string) => {
+    const updatedCosts: Record<string, number> = { ...stitchingCosts };
+    delete updatedCosts[name];
+
+    const baseGarments = GARMENTS_BY_CATEGORY[category] || [];
+    const isDefault = includesCaseInsensitive(baseGarments, name);
+
+    const currentCustomList = Array.isArray(customGarments[category]) ? customGarments[category] : [];
+    const filteredCustomList = isDefault ? currentCustomList : removeCaseInsensitive(currentCustomList, name);
+    const customChanged = filteredCustomList.length !== currentCustomList.length;
+
+    const currentRemoved = Array.isArray(removedGarments[category]) ? removedGarments[category] : [];
+    const updatedRemoved = addUniqueCaseInsensitive(currentRemoved, name);
+
+    const patch: any = { stitchingCosts: updatedCosts };
+    if (customChanged) {
+      patch.customGarments = {
+        ...customGarments,
+        [category]: filteredCustomList,
+      };
+    }
+    if (updatedRemoved.length !== currentRemoved.length) {
+      patch.removedGarments = {
+        ...removedGarments,
+        [category]: updatedRemoved,
+      };
+    }
+    onChange(patch);
+  };
+
+  const handleRestoreGarment = (category: string, name: string) => {
+    const currentRemoved = Array.isArray(removedGarments[category]) ? removedGarments[category] : [];
+    const updatedRemoved = removeCaseInsensitive(currentRemoved, name);
+
+    const baseGarments = GARMENTS_BY_CATEGORY[category] || [];
+    const isDefault = includesCaseInsensitive(baseGarments, name);
+    const currentCustomList = Array.isArray(customGarments[category]) ? customGarments[category] : [];
+    const needsCustomRestore = !isDefault && !includesCaseInsensitive(currentCustomList, name);
+
+    const patch: any = {};
+    if (updatedRemoved.length !== currentRemoved.length) {
+      patch.removedGarments = {
+        ...removedGarments,
+        [category]: updatedRemoved,
+      };
+    }
+    if (needsCustomRestore) {
+      patch.customGarments = {
+        ...customGarments,
+        [category]: [...currentCustomList, name],
+      };
+    }
+    if (Object.keys(patch).length) {
+      onChange(patch);
+    }
+  };
+
   return (
     <div className="space-y-6 sm:space-y-8 px-4 sm:px-0">
       <div>
@@ -546,28 +793,56 @@ export function ProfessionalDetailsStep({ data, onChange }: Props) {
             <Label className="text-sm sm:text-base">Set prices for fabrics you supply</Label>
             <p className="text-xs text-gray-500">Enter the price per meter you will charge for each fabric. These are set by you and will be shown to customers.</p>
 
+            <div className="flex flex-col sm:flex-row gap-3 items-end">
+              <div className="flex-1">
+                <Label className="text-xs font-medium text-gray-500">Fabric name</Label>
+                <Input
+                  value={newFabricName}
+                  onChange={(e) => setNewFabricName(e.target.value)}
+                  placeholder="e.g., Organic Cotton"
+                  className="text-sm"
+                />
+              </div>
+              <div className="w-full sm:w-40">
+                <Label className="text-xs font-medium text-gray-500">Price / meter</Label>
+                <Input
+                  value={newFabricPrice}
+                  inputMode="numeric"
+                  onChange={(e) => setNewFabricPrice(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder="₹"
+                  className="text-sm"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleAddFabric}
+                className="w-full sm:w-auto px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              >
+                Add Fabric
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-auto p-2 border rounded-lg bg-white dark:bg-gray-800">
-              {FABRICS_LIST.map((fabric) => {
-                const currentPrices = data.fabricPrices || {};
-                const value = currentPrices[fabric] !== undefined ? String(currentPrices[fabric]) : '';
+              {visibleFabricEntries.map((fabric) => {
+                const priceValue = fabricPrices[fabric] !== undefined ? String(fabricPrices[fabric]) : '';
                 return (
                   <div key={fabric} className="flex items-center gap-3 p-2 rounded-md bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700">
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">{fabric}</div>
                     </div>
-                    <div className="w-36">
+                    <div className="w-36 flex items-center gap-2">
                       <Input
                         type="text"
                         inputMode="numeric"
                         pattern="\d*"
-                        value={value}
+                        value={priceValue}
                         onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                           // block + - e E . characters which are allowed in number inputs in some browsers
                           if (['+', '-', 'e', 'E', '.'].includes(String(e.key))) e.preventDefault();
                         }}
                         onChange={(e) => {
                           const val = e.target.value.replace(/[^0-9]/g, '');
-                          const next = { ...(data.fabricPrices || {}) };
+                          const next = { ...fabricPrices };
                           if (val === '') {
                             delete next[fabric];
                           } else {
@@ -578,11 +853,39 @@ export function ProfessionalDetailsStep({ data, onChange }: Props) {
                         placeholder="Price / m"
                         className="text-sm"
                       />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFabric(fabric)}
+                        className="p-2 text-gray-400 hover:text-red-500"
+                        aria-label={`Remove ${fabric}`}
+                        title="Hide this fabric from your offerings"
+                      >
+                        <X size={14} />
+                      </button>
                     </div>
                   </div>
                 );
               })}
             </div>
+            {removedFabrics.length > 0 && (
+              <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Removed fabrics</div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {removedFabrics.map((fabric) => (
+                    <span key={fabric} className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-gray-800 px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-200 shadow-sm">
+                      {fabric}
+                      <button
+                        type="button"
+                        onClick={() => handleRestoreFabric(fabric)}
+                        className="text-blue-600 hover:text-blue-500 dark:text-blue-300"
+                      >
+                        Restore
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -592,23 +895,71 @@ export function ProfessionalDetailsStep({ data, onChange }: Props) {
             <Label className="text-sm sm:text-base">Set stitching cost for selected garment types</Label>
             <p className="text-xs text-gray-500">Only garments from your selected specializations are shown. Enter the stitching cost you charge for each garment.</p>
 
+            <div className="flex flex-col md:flex-row gap-3 items-end">
+              <div className="w-full md:w-40">
+                <Label className="text-xs font-medium text-gray-500">Specialization</Label>
+                <select
+                  value={newGarmentCategory}
+                  onChange={(e) => setNewGarmentCategory(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800"
+                >
+                  {specializationArray.map((spec: string) => (
+                    <option key={spec} value={spec}>{spec === 'men' ? 'Men' : spec === 'women' ? 'Women' : spec}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1">
+                <Label className="text-xs font-medium text-gray-500">Garment name</Label>
+                <Input
+                  value={newGarmentName}
+                  onChange={(e) => setNewGarmentName(e.target.value)}
+                  placeholder="e.g., Indo-Western Suit"
+                  className="text-sm"
+                />
+              </div>
+              <div className="w-full md:w-40">
+                <Label className="text-xs font-medium text-gray-500">Stitching price</Label>
+                <Input
+                  value={newGarmentPrice}
+                  inputMode="numeric"
+                  onChange={(e) => setNewGarmentPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="₹"
+                  className="text-sm"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleAddGarment}
+                className="w-full md:w-auto px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              >
+                Add Garment
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 gap-4">
-              {['men','women'].map(cat => {
-                if (!data.specialization.includes(cat)) return null;
-                const garments = GARMENTS_BY_CATEGORY[cat];
+              {(['men','women'] as const).map(cat => {
+                if (!specializationArray.includes(cat)) return null;
+                const baseGarments = GARMENTS_BY_CATEGORY[cat] || [];
+                const extraGarments = Array.isArray(customGarments[cat]) ? customGarments[cat] : [];
+                const removedForCategory = Array.isArray(removedGarments[cat]) ? removedGarments[cat] : [];
+                const garmentList = Array.from(new Set([
+                  ...baseGarments,
+                  ...extraGarments,
+                ])).filter((item) => !includesCaseInsensitive(removedForCategory, item));
+                const sectionLabel = cat === 'men' ? 'Men garments' : cat === 'women' ? 'Women garments' : `${cat} garments`;
+
                 return (
                   <div key={cat} className="space-y-2">
-                    <div className="text-sm font-medium capitalize">{cat === 'men' ? 'Men' : 'Women'} garments</div>
+                    <div className="text-sm font-medium capitalize">{sectionLabel}</div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-2 border rounded-lg bg-white dark:bg-gray-800 max-h-72 overflow-auto">
-                      {garments.map((g) => {
-                        const current = data.stitchingCosts || {};
-                        const val = current[g] !== undefined ? String(current[g]) : '';
+                      {garmentList.map((g) => {
+                        const val = stitchingCosts[g] !== undefined ? String(stitchingCosts[g]) : '';
                         return (
                           <div key={g} className="flex items-center gap-3 p-2 rounded-md bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700">
                             <div className="flex-1 min-w-0">
                               <div className="text-sm font-medium truncate">{g}</div>
                             </div>
-                            <div className="w-36">
+                            <div className="w-36 flex items-center gap-2">
                               <Input
                                 type="text"
                                 inputMode="numeric"
@@ -619,18 +970,51 @@ export function ProfessionalDetailsStep({ data, onChange }: Props) {
                                 }}
                                 onChange={(e) => {
                                   const v = e.target.value.replace(/[^0-9]/g, '');
-                                  const next = { ...(data.stitchingCosts || {}) };
+                                  const next = { ...stitchingCosts };
                                   if (v === '') delete next[g]; else next[g] = Number(v);
                                   onChange({ stitchingCosts: next });
                                 }}
                                 placeholder="Stitching ₹"
                                 className="text-sm"
                               />
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveGarment(cat, g)}
+                                className="p-2 text-gray-400 hover:text-red-500"
+                                aria-label={`Remove ${g}`}
+                                title="Hide this garment type"
+                              >
+                                <X size={14} />
+                              </button>
                             </div>
                           </div>
                         );
                       })}
+                      {garmentList.length === 0 && (
+                        <div className="col-span-full rounded-md border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 p-4 text-sm text-gray-500 dark:text-gray-300">
+                          No garments currently listed for this specialization.
+                        </div>
+                      )}
                     </div>
+                    {removedForCategory.length > 0 && (
+                      <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-3">
+                        <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Removed {sectionLabel.toLowerCase()}</div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {removedForCategory.map((item) => (
+                            <span key={item} className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-gray-800 px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-200 shadow-sm">
+                              {item}
+                              <button
+                                type="button"
+                                onClick={() => handleRestoreGarment(cat, item)}
+                                className="text-blue-600 hover:text-blue-500 dark:text-blue-300"
+                              >
+                                Restore
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -646,7 +1030,7 @@ export function ProfessionalDetailsStep({ data, onChange }: Props) {
           <MapPin size={18} className="text-gray-500 flex-shrink-0" />
           Location & Service Area
         </h4>
-        <LocationPicker address={data.address} pincode={data.pincode} onAddressChange={(address) => onChange({ address })} onPincodeChange={(pincode) => onChange({ pincode })} />
+  <LocationPicker address={data.address} pincode={data.pincode} onAddressChange={(address: string) => onChange({ address })} onPincodeChange={(pincode: string) => onChange({ pincode })} />
       </div>
 
       <div className="space-y-4 pt-4 sm:pt-6 border-t">
@@ -657,7 +1041,7 @@ export function ProfessionalDetailsStep({ data, onChange }: Props) {
           </h4>
           <p className="text-xs sm:text-sm text-gray-500">Set your working schedule to let customers know when you're available</p>
         </div>
-        <AvailabilitySelector value={data.workingHours} onChange={(schedule) => onChange({ workingHours: schedule })} />
+  <AvailabilitySelector value={data.workingHours} onChange={(schedule: WorkingSchedule) => onChange({ workingHours: schedule })} />
       </div>
     </div>
   );
