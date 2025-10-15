@@ -397,7 +397,7 @@ export default function SignUpPage() {
             </span>
             <Link
               href="/signin"
-              className="font-semibold text-primary/90 underline-offset-4 hover:text-primary transition-colors duration-300"
+              className="font-semibold text-amber-300 underline underline-offset-4 hover:text-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 transition-colors duration-300"
             >
               Sign In
             </Link>

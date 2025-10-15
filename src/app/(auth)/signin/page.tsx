@@ -451,7 +451,7 @@ export default function SignInPage() {
             <span className="block sm:inline mb-1 sm:mb-0 sm:mr-1">Don't have an account?</span>
             <Link 
               href="/signup" 
-              className="font-semibold text-primary/90 underline-offset-4 hover:text-primary transition-colors duration-300"
+              className="font-semibold text-amber-300 underline underline-offset-4 hover:text-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 transition-colors duration-300"
             >
               Sign Up
             </Link>
