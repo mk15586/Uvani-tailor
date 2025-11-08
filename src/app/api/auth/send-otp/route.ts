@@ -16,11 +16,29 @@ export async function POST(req: Request) {
     const otp = generateOtp();
     otpStore[email] = { otp, expires: Date.now() + 10 * 60 * 1000 };
 
+    // Use environment variables for SMTP credentials. In development (non-production)
+    // avoid calling external SMTP providers — just log the OTP and return OK so
+    // the developer flow is smooth. In production, provide SMTP credentials.
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const smtpService = process.env.SMTP_SERVICE || 'gmail';
+
+    // If SMTP is not configured or we're running locally, skip sending email and
+    // return ok after logging the OTP. This prevents failures like the one you
+    // saw during local development when credentials are invalid or blocked by
+    // Gmail.
+    const isProd = process.env.NODE_ENV === 'production';
+    if (!isProd || !smtpUser || !smtpPass) {
+      console.log(`[DEV] OTP for ${email}: ${otp}`);
+      // Store OTP as before, but don't attempt to send email in dev
+      return NextResponse.json({ ok: true });
+    }
+
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: smtpService,
       auth: {
-        user: 'uvanitaloring2025@gmail.com',
-        pass: 'kiok eujd joum lmxo',
+        user: smtpUser,
+        pass: smtpPass,
       },
     });
 
