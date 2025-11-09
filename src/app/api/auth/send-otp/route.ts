@@ -17,10 +17,14 @@ export async function POST(req: Request) {
     otpStore[email] = { otp, expires: Date.now() + 10 * 60 * 1000 };
 
 
-    // Hardcoded credentials for testing (replace with your actual credentials)
-    const smtpUser = 'connectuvani@gmail.com';
-    const smtpPass = 'vrda jurq vfqj taba';
-    const smtpService = 'gmail';
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const smtpService = process.env.SMTP_SERVICE || 'gmail';
+
+    if (!smtpUser || !smtpPass) {
+      console.error('Missing SMTP credentials');
+      return NextResponse.json({ error: 'SMTP credentials missing' }, { status: 500 });
+    }
 
     const transporter = nodemailer.createTransport({
       service: smtpService,
